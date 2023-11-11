@@ -18,7 +18,9 @@ This workflow is a wrapper around [granted](granted.dev) CLI tool. Most of it's 
       brew install granted
       ```
   2.  Follow Granted's [Getting Started](https://docs.commonfate.io/granted/getting-started/)
-
+  
+# Installation
+[Download]((https://github.com/sherifabdlnaby/alfred-aws-granted/releases/latest)) the latest `alfred-granted-*.alfredworkflow` file from [Releases](https://github.com/sherifabdlnaby/alfred-aws-granted/releases/latest).
 
 # Usage
 1. Open Alfred and type `aws` to see the list of AWS Accounts you have access to.
