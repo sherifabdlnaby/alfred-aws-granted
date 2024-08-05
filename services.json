@@ -96,6 +96,13 @@
         "autocomplete": "ecs"
     },
     {
+        "uid": "elasticache",
+        "title": "ElastiCache",
+        "arg": "elasticache",
+        "icon": {"path": "./services/elasticache.png"},
+        "autocomplete": "elasticache"
+    },
+    {
         "uid": "eks",
         "title": "EKS",
         "arg": "eks",
