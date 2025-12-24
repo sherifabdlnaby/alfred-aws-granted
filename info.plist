@@ -378,6 +378,7 @@ echo ']}'</string>
 				<key>script</key>
 				<string># I know it's lazy :3 
 
+export GRANTED_ALIAS_CONFIGURED="true";
 
 if [[ $2 == "" ]]; then
 	if [[ $3 == "" ]]; then
