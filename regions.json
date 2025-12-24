@@ -100,6 +100,15 @@
             "autocomplete":"ap-southeast-4"
         },
         {
+            "uid":"ap-southeast-5",
+            "title":"ap-southeast-5",
+            "arg":"ap-southeast-5",
+            "icon":{
+                "path":"./region.png"
+            },
+            "autocomplete":"ap-southeast-5"
+        },
+        {
             "uid":"ca-central-1",
             "title":"ca-central-1",
             "arg":"ca-central-1",
@@ -199,6 +208,24 @@
             "autocomplete":"eu-west-3"
         },
         {
+            "uid":"eu-west-4",
+            "title":"eu-west-4",
+            "arg":"eu-west-4",
+            "icon":{
+                "path":"./region.png"
+            },
+            "autocomplete":"eu-west-4"
+        },
+        {
+            "uid":"eu-west-6",
+            "title":"eu-west-6",
+            "arg":"eu-west-6",
+            "icon":{
+                "path":"./region.png"
+            },
+            "autocomplete":"eu-west-6"
+        },
+        {
             "uid":"il-central-1",
             "title":"il-central-1",
             "arg":"il-central-1",
@@ -215,6 +242,15 @@
                 "path":"./region.png"
             },
             "autocomplete":"me-central-1"
+        },
+        {
+            "uid":"me-central-2",
+            "title":"me-central-2",
+            "arg":"me-central-2",
+            "icon":{
+                "path":"./region.png"
+            },
+            "autocomplete":"me-central-2"
         },
         {
             "uid":"me-south-1",
@@ -287,6 +323,15 @@
                 "path":"./region.png"
             },
             "autocomplete":"us-west-2"
+        },
+        {
+            "uid":"us-west-3",
+            "title":"us-west-3",
+            "arg":"us-west-3",
+            "icon":{
+                "path":"./region.png"
+            },
+            "autocomplete":"us-west-3"
         }
     ]
 }

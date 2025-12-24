@@ -1,223 +1,544 @@
-{"items": [
-    {
-        "uid": "dashboard",
-        "title": "Dashboard",
-        "arg": "",
-        "icon": {"path": "./services/dashboard.png"},
-        "autocomplete": "dashboard"
-    },
-    {
-        "uid": "athena",
-        "title": "Athena",
-        "arg": "athena",
-        "icon": {"path": "./services/athena.png"},
-        "autocomplete": "athena"
-    },
-    {
-        "uid": "appsync",
-        "title": "App Sync",
-        "arg": "appsync",
-        "icon": {"path": "./services/appsync.png"},
-        "autocomplete": "appsync"
-    },
-    {
-        "uid": "costmanagement",
-        "title": "Cost Management",
-        "arg": "ce",
-        "icon": {"path": "./services/costmanagement.png"},
-        "autocomplete": "costmanagement"
-    },
-    {
-        "uid": "cloudfront",
-        "title": "Cloudfront",
-        "arg": "cf",
-        "icon": {"path": "./services/cloudfront.png"},
-        "autocomplete": "cloudfront"
-    },
-    {
-        "uid": "cloudformation",
-        "title": "Cloudformation",
-        "arg": "cloudformation",
-        "icon": {"path": "./services/cloudformation.png"},
-        "autocomplete": "cloudformation"
-    },{
-        "uid": "cloudmap",
-        "title": "Cloud Map",
-        "arg": "cloudmap",
-        "icon": {"path": "./services/cloudmap.png"},
-        "autocomplete": "cloudmap"
-    },{
-        "uid": "cloudtrail",
-        "title": "CloudTrail",
-        "arg": "ct",
-        "icon": {"path": "./services/cloudtrail.png"},
-        "autocomplete": "cloudtrail"
-    },
-    {
-        "uid": "cloudwatch",
-        "title": "CloudWatch",
-        "arg": "cloudwatch",
-        "icon": {"path": "./services/cloudwatch.png"},
-        "autocomplete": "cloudwatch"
-    },
-    {
-        "uid": "config",
-        "title": "AWS Config",
-        "arg": "config",
-        "icon": {"path": "./services/config.png"},
-        "autocomplete": "config"
-    },
-    {
-        "uid": "dynamodb",
-        "title": "Dynamo DB",
-        "arg": "ddb",
-        "icon": {"path": "./services/dynamodb.png"},
-        "autocomplete": "dynamodb"
-    },
-    {
-        "uid": "ec2",
-        "title": "EC2",
-        "arg": "ec2",
-        "icon": {"path": "./services/ec2.png"},
-        "autocomplete": "ec2"
-    },
-    {
-        "uid": "ecr",
-        "title": "ECR",
-        "arg": "ecr",
-        "icon": {"path": "./services/ecr.png"},
-        "autocomplete": "ecr"
-    },
-    {
-        "uid": "ecs",
-        "title": "ECS",
-        "arg": "ecs",
-        "icon": {"path": "./services/ecs.png"},
-        "autocomplete": "ecs"
-    },
-    {
-        "uid": "eks",
-        "title": "EKS",
-        "arg": "eks",
-        "icon": {"path": "./services/eks.png"},
-        "autocomplete": "eks"
-    },{
-        "uid": "iam",
-        "title": "IAM",
-        "arg": "iam",
-        "icon": {"path": "./services/iam.png"},
-        "autocomplete": "iam"
-    },{
-        "uid": "lambda",
-        "title": "Lambda",
-        "arg": "lambda",
-        "icon": {"path": "./services/lambda.png"},
-        "autocomplete": "lambda"
-    },
-    {
-        "uid": "paramstore",
-        "title": "Parameter Store - SSM",
-        "arg": "param",
-        "icon": {"path": "./services/systemsmanager.png"},
-        "autocomplete": "Parameter Store"
-    },
-    {
-        "uid": "ssm",
-        "title": "System Manager - SSM",
-        "arg": "ssm",
-        "icon": {"path": "./services/systemsmanager.png"},
-        "autocomplete": "ssm"
-    },{
-        "uid": "rds",
-        "title": "RDS",
-        "arg": "rds",
-        "icon": {"path": "./services/rds.png"},
-        "autocomplete": "rds"
-    },
-    {
-        "uid": "redshift",
-        "title": "Redshift",
-        "arg": "redshift",
-        "icon": {"path": "./services/redshift.png"},
-        "autocomplete": "redshift"
-    },{
-        "uid": "route53",
-        "title": "Route53",
-        "arg": "route53",
-        "icon": {"path": "./services/route53.png"},
-        "autocomplete": "route53"
-    },
-    {
-        "uid": "s3",
-        "title": "S3",
-        "arg": "s3",
-        "icon": {"path": "./services/s3.png"},
-        "autocomplete": "s3"
-    },
-    {
-        "uid": "sagemaker",
-        "title": "Sage Maker",
-        "arg": "sagemaker",
-        "icon": {"path": "./services/sagemaker.png"},
-        "autocomplete": "sagemaker"
-    }, {
-        "uid": "secretsmanager",
-        "title": "Secret Manager",
-        "arg": "secretsmanager",
-        "icon": {"path": "./services/secretsmanager.png"},
-        "autocomplete": "secretsmanager"
-    },{
-        "uid": "securityhub",
-        "title": "Security Hub",
-        "arg": "securityhub",
-        "icon": {"path": "./services/securityhub.png"},
-        "autocomplete": "securityhub"
-    },{
-        "uid": "ses",
-        "title": "ses",
-        "arg": "ses",
-        "icon": {"path": "./services/ses.png"},
-        "autocomplete": "ses"
-    },{
-        "uid": "singlesignon",
-        "title": "SSO - Single Sign On",
-        "arg": "singlesignon",
-        "icon": {"path": "./services/singlesignon.png"},
-        "autocomplete": "singlesignon"
-    },{
-        "uid": "sns",
-        "title": "SNS",
-        "arg": "sns",
-        "icon": {"path": "./services/sns.png"},
-        "autocomplete": "sns"
-    },
-    {
-        "uid": "sqs",
-        "title": "SQS",
-        "arg": "sqs",
-        "icon": {"path": "./services/sqs.png"},
-        "autocomplete": "sqs"
-    },
-    {
-        "uid": "trustedadvisor",
-        "title": "Trusted Advisor",
-        "arg": "trustedadvisor",
-        "icon": {"path": "./services/trustedadvisor.png"},
-        "autocomplete": "trustedadvisor"
-    },
-    {
-        "uid": "vpc",
-        "title": "VPC",
-        "arg": "vpc",
-        "icon": {"path": "./services/vpc.png"},
-        "autocomplete": "vpc"
-    },
-    {
-        "uid": "waf",
-        "title": "AWS WAF",
-        "arg": "waf",
-        "icon": {"path": "./services/waf.png"},
-        "autocomplete": "waf"
-    }
-]
+{
+    "items": [
+        {
+            "uid": "dashboard",
+            "title": "Dashboard",
+            "arg": "",
+            "icon": {
+                "path": "./services/dashboard.png"
+            },
+            "autocomplete": "dashboard aws console home"
+        },
+        {
+            "uid": "acm",
+            "title": "ACM - Certificate Manager",
+            "arg": "acm",
+            "icon": {
+                "path": "./services/acm.svg"
+            },
+            "autocomplete": "acm certificate manager ssl tls cert"
+        },
+        {
+            "uid": "aos",
+            "title": "OpenSearch",
+            "arg": "aos",
+            "icon": {
+                "path": "./services/aos.svg"
+            },
+            "autocomplete": "aos opensearch elasticsearch search"
+        },
+        {
+            "uid": "apigateway",
+            "title": "API Gateway",
+            "arg": "apigateway",
+            "icon": {
+                "path": "./services/apigateway.svg"
+            },
+            "autocomplete": "apigateway api gateway rest graphql"
+        },
+        {
+            "uid": "appsync",
+            "title": "AppSync",
+            "arg": "appsync",
+            "icon": {
+                "path": "./services/appsync.svg"
+            },
+            "autocomplete": "appsync graphql api realtime"
+        },
+        {
+            "uid": "athena",
+            "title": "Athena",
+            "arg": "athena",
+            "icon": {
+                "path": "./services/athena.svg"
+            },
+            "autocomplete": "athena sql query analytics s3"
+        },
+        {
+            "uid": "backup",
+            "title": "AWS Backup",
+            "arg": "backup",
+            "icon": {
+                "path": "./services/backup.svg"
+            },
+            "autocomplete": "backup aws backup recovery restore"
+        },
+        {
+            "uid": "bedrock",
+            "title": "Bedrock",
+            "arg": "bedrock",
+            "icon": {
+                "path": "./services/bedrock.svg"
+            },
+            "autocomplete": "bedrock ai ml foundation model"
+        },
+        {
+            "uid": "billing",
+            "title": "Billing",
+            "arg": "billing",
+            "icon": {
+                "path": "./services/billing.svg"
+            },
+            "autocomplete": "billing cost invoice payment"
+        },
+        {
+            "uid": "cloud9",
+            "title": "Cloud9",
+            "arg": "c9",
+            "icon": {
+                "path": "./services/cloud9.svg"
+            },
+            "autocomplete": "cloud9 c9 ide editor development"
+        },
+        {
+            "uid": "cloudformation",
+            "title": "CloudFormation",
+            "arg": "cloudformation",
+            "icon": {
+                "path": "./services/cloudformation.svg"
+            },
+            "autocomplete": "cloudformation cfn infrastructure iac template"
+        },
+        {
+            "uid": "cloudfront",
+            "title": "CloudFront",
+            "arg": "cf",
+            "icon": {
+                "path": "./services/cloudfront.svg"
+            },
+            "autocomplete": "cloudfront cf cdn distribution"
+        },
+        {
+            "uid": "cloudmap",
+            "title": "Cloud Map",
+            "arg": "cloudmap",
+            "icon": {
+                "path": "./services/cloudmap.svg"
+            },
+            "autocomplete": "cloudmap service discovery dns"
+        },
+        {
+            "uid": "cloudtrail",
+            "title": "CloudTrail",
+            "arg": "ct",
+            "icon": {
+                "path": "./services/cloudtrail.svg"
+            },
+            "autocomplete": "cloudtrail ct audit logging trail"
+        },
+        {
+            "uid": "cloudwatch",
+            "title": "CloudWatch",
+            "arg": "cloudwatch",
+            "icon": {
+                "path": "./services/cloudwatch.svg"
+            },
+            "autocomplete": "cloudwatch cw monitoring metrics logs"
+        },
+        {
+            "uid": "codeartifact",
+            "title": "CodeArtifact",
+            "arg": "codeartifact",
+            "icon": {
+                "path": "./services/codeartifact.svg"
+            },
+            "autocomplete": "codeartifact artifact package npm maven"
+        },
+        {
+            "uid": "codecommit",
+            "title": "CodeCommit",
+            "arg": "codecommit",
+            "icon": {
+                "path": "./services/codecommit.svg"
+            },
+            "autocomplete": "codecommit git repository source"
+        },
+        {
+            "uid": "codedeploy",
+            "title": "CodeDeploy",
+            "arg": "codedeploy",
+            "icon": {
+                "path": "./services/codedeploy.svg"
+            },
+            "autocomplete": "codedeploy deployment blue green"
+        },
+        {
+            "uid": "codepipeline",
+            "title": "CodePipeline",
+            "arg": "codepipeline",
+            "icon": {
+                "path": "./services/codepipeline.svg"
+            },
+            "autocomplete": "codepipeline ci cd pipeline"
+        },
+        {
+            "uid": "codesuite",
+            "title": "CodeSuite",
+            "arg": "codesuite",
+            "icon": {
+                "path": "./services/codesuite.svg"
+            },
+            "autocomplete": "codesuite devops ci cd"
+        },
+        {
+            "uid": "cognito",
+            "title": "Cognito",
+            "arg": "cognito",
+            "icon": {
+                "path": "./services/cognito.svg"
+            },
+            "autocomplete": "cognito authentication auth user pool"
+        },
+        {
+            "uid": "config",
+            "title": "AWS Config",
+            "arg": "config",
+            "icon": {
+                "path": "./services/config.svg"
+            },
+            "autocomplete": "config aws config compliance audit"
+        },
+        {
+            "uid": "controltower",
+            "title": "Control Tower",
+            "arg": "controltower",
+            "icon": {
+                "path": "./services/controltower.svg"
+            },
+            "autocomplete": "controltower governance multi account"
+        },
+        {
+            "uid": "costmanagement",
+            "title": "Cost Management",
+            "arg": "ce",
+            "icon": {
+                "path": "./services/costmanagement.svg"
+            },
+            "autocomplete": "costmanagement ce cost explorer billing"
+        },
+        {
+            "uid": "dms",
+            "title": "Database Migration Service",
+            "arg": "dms",
+            "icon": {
+                "path": "./services/dms.svg"
+            },
+            "autocomplete": "dms database migration service"
+        },
+        {
+            "uid": "directconnect",
+            "title": "Direct Connect",
+            "arg": "dx",
+            "icon": {
+                "path": "./services/directconnect.svg"
+            },
+            "autocomplete": "directconnect dx network vpn"
+        },
+        {
+            "uid": "dynamodb",
+            "title": "DynamoDB",
+            "arg": "ddb",
+            "icon": {
+                "path": "./services/dynamodb.svg"
+            },
+            "autocomplete": "dynamodb ddb nosql database"
+        },
+        {
+            "uid": "ec2",
+            "title": "EC2",
+            "arg": "ec2",
+            "icon": {
+                "path": "./services/ec2.svg"
+            },
+            "autocomplete": "ec2 compute instance virtual machine"
+        },
+        {
+            "uid": "ecr",
+            "title": "ECR",
+            "arg": "ecr",
+            "icon": {
+                "path": "./services/ecr.svg"
+            },
+            "autocomplete": "ecr container registry docker image"
+        },
+        {
+            "uid": "ecs",
+            "title": "ECS",
+            "arg": "ecs",
+            "icon": {
+                "path": "./services/ecs.svg"
+            },
+            "autocomplete": "ecs container service fargate"
+        },
+        {
+            "uid": "eks",
+            "title": "EKS",
+            "arg": "eks",
+            "icon": {
+                "path": "./services/eks.svg"
+            },
+            "autocomplete": "eks kubernetes k8s container"
+        },
+        {
+            "uid": "elasticache",
+            "title": "ElastiCache",
+            "arg": "elasticache",
+            "icon": {
+                "path": "./services/elasticache.svg"
+            },
+            "autocomplete": "elasticache redis memcached cache"
+        },
+        {
+            "uid": "elasticbeanstalk",
+            "title": "Elastic Beanstalk",
+            "arg": "eb",
+            "icon": {
+                "path": "./services/elasticbeanstalk.svg"
+            },
+            "autocomplete": "elasticbeanstalk eb deployment platform"
+        },
+        {
+            "uid": "eventbridge",
+            "title": "EventBridge",
+            "arg": "eventbridge",
+            "icon": {
+                "path": "./services/eventbridge.svg"
+            },
+            "autocomplete": "eventbridge events event bus"
+        },
+        {
+            "uid": "globalaccelerator",
+            "title": "Global Accelerator",
+            "arg": "globalaccelerator",
+            "icon": {
+                "path": "./services/globalaccelerator.svg"
+            },
+            "autocomplete": "globalaccelerator network performance"
+        },
+        {
+            "uid": "grafana",
+            "title": "Grafana",
+            "arg": "grafana",
+            "icon": {
+                "path": "./services/grafana.svg"
+            },
+            "autocomplete": "grafana monitoring observability dashboard"
+        },
+        {
+            "uid": "guardduty",
+            "title": "GuardDuty",
+            "arg": "gd",
+            "icon": {
+                "path": "./services/guardduty.svg"
+            },
+            "autocomplete": "guardduty gd threat detection security"
+        },
+        {
+            "uid": "iam",
+            "title": "IAM",
+            "arg": "iam",
+            "icon": {
+                "path": "./services/iam.svg"
+            },
+            "autocomplete": "iam identity access management user role"
+        },
+        {
+            "uid": "kms",
+            "title": "KMS",
+            "arg": "kms",
+            "icon": {
+                "path": "./services/kms.svg"
+            },
+            "autocomplete": "kms key management encryption"
+        },
+        {
+            "uid": "lambda",
+            "title": "Lambda",
+            "arg": "lambda",
+            "icon": {
+                "path": "./services/lambda.svg"
+            },
+            "autocomplete": "lambda serverless function compute"
+        },
+        {
+            "uid": "mwaa",
+            "title": "MWAA - Managed Workflows",
+            "arg": "mwaa",
+            "icon": {
+                "path": "./services/mwaa.svg"
+            },
+            "autocomplete": "mwaa airflow workflow orchestration"
+        },
+        {
+            "uid": "organizations",
+            "title": "Organizations",
+            "arg": "organizations",
+            "icon": {
+                "path": "./services/organizations.svg"
+            },
+            "autocomplete": "organizations org multi account"
+        },
+        {
+            "uid": "paramstore",
+            "title": "Parameter Store - SSM",
+            "arg": "param",
+            "icon": {
+                "path": "./services/systemsmanager.svg"
+            },
+            "autocomplete": "paramstore parameter store ssm config"
+        },
+        {
+            "uid": "ram",
+            "title": "RAM - Resource Access Manager",
+            "arg": "ram",
+            "icon": {
+                "path": "./services/ram.svg"
+            },
+            "autocomplete": "ram resource access manager sharing"
+        },
+        {
+            "uid": "rds",
+            "title": "RDS",
+            "arg": "rds",
+            "icon": {
+                "path": "./services/rds.svg"
+            },
+            "autocomplete": "rds database mysql postgresql"
+        },
+        {
+            "uid": "redshift",
+            "title": "Redshift",
+            "arg": "redshift",
+            "icon": {
+                "path": "./services/redshift.svg"
+            },
+            "autocomplete": "redshift data warehouse analytics"
+        },
+        {
+            "uid": "route53",
+            "title": "Route53",
+            "arg": "route53",
+            "icon": {
+                "path": "./services/route53.svg"
+            },
+            "autocomplete": "route53 dns domain name"
+        },
+        {
+            "uid": "s3",
+            "title": "S3",
+            "arg": "s3",
+            "icon": {
+                "path": "./services/s3.svg"
+            },
+            "autocomplete": "s3 storage bucket object"
+        },
+        {
+            "uid": "sagemaker",
+            "title": "SageMaker",
+            "arg": "sagemaker",
+            "icon": {
+                "path": "./services/sagemaker.svg"
+            },
+            "autocomplete": "sagemaker ml machine learning model"
+        },
+        {
+            "uid": "secretsmanager",
+            "title": "Secrets Manager",
+            "arg": "secretsmanager",
+            "icon": {
+                "path": "./services/secretsmanager.svg"
+            },
+            "autocomplete": "secretsmanager secret password credential"
+        },
+        {
+            "uid": "securityhub",
+            "title": "Security Hub",
+            "arg": "securityhub",
+            "icon": {
+                "path": "./services/securityhub.svg"
+            },
+            "autocomplete": "securityhub security findings compliance"
+        },
+        {
+            "uid": "ses",
+            "title": "SES",
+            "arg": "ses",
+            "icon": {
+                "path": "./services/ses.svg"
+            },
+            "autocomplete": "ses email smtp mail"
+        },
+        {
+            "uid": "singlesignon",
+            "title": "SSO - Single Sign On",
+            "arg": "sso",
+            "icon": {
+                "path": "./services/singlesignon.svg"
+            },
+            "autocomplete": "singlesignon sso identity federation"
+        },
+        {
+            "uid": "sns",
+            "title": "SNS",
+            "arg": "sns",
+            "icon": {
+                "path": "./services/sns.svg"
+            },
+            "autocomplete": "sns notification pub sub messaging"
+        },
+        {
+            "uid": "sqs",
+            "title": "SQS",
+            "arg": "sqs",
+            "icon": {
+                "path": "./services/sqs.svg"
+            },
+            "autocomplete": "sqs queue messaging decoupling"
+        },
+        {
+            "uid": "ssm",
+            "title": "Systems Manager - SSM",
+            "arg": "ssm",
+            "icon": {
+                "path": "./services/ssm.svg"
+            },
+            "autocomplete": "ssm systems manager parameter patch"
+        },
+        {
+            "uid": "states",
+            "title": "Step Functions",
+            "arg": "states",
+            "icon": {
+                "path": "./services/states.svg"
+            },
+            "autocomplete": "states step functions workflow orchestration"
+        },
+        {
+            "uid": "trustedadvisor",
+            "title": "Trusted Advisor",
+            "arg": "trustedadvisor",
+            "icon": {
+                "path": "./services/trustedadvisor.svg"
+            },
+            "autocomplete": "trustedadvisor advisor recommendation best practice"
+        },
+        {
+            "uid": "vpc",
+            "title": "VPC",
+            "arg": "vpc",
+            "icon": {
+                "path": "./services/vpc.svg"
+            },
+            "autocomplete": "vpc virtual private cloud network"
+        },
+        {
+            "uid": "waf",
+            "title": "AWS WAF",
+            "arg": "wafv2",
+            "icon": {
+                "path": "./services/waf.svg"
+            },
+            "autocomplete": "waf web application firewall security"
+        }
+    ]
 }
