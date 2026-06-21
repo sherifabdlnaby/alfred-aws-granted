@@ -24,6 +24,9 @@ betterleaks = "1"   # secret scanner
 # pre-commit
 hk = "1.47.0" # full MAJOR.MINOR.PATCH — git-tag backend (matches `hk init`)
 
+# yamllint ships only via pipx (pure-Python). uv installs it; see pipx.uvx below.
+uv = "0.9"
+
 # ── 📏 vars ───────────────────────────────────────────────────────────────────
 [vars]
 setup_version = "1" # Increment when setup steps change / users must re-run setup.
@@ -128,6 +131,7 @@ postinstall = "hk install --mise" # canonical hook install: runs after every `mi
 lockfile = true                     # write/commit mise.lock — REQUIRED before any pin resolves reproducibly
 minimum_release_age = "7d"          # ignore releases <7d old (supply-chain cooldown)
 disable_backends = ["asdf", "vfox"] # resolve only via verified backends
+pipx.uvx = true                     # install pipx tools (yamllint) via uv; the bundled-pip path breaks under minimum_release_age on older CI pip
 
 # Use `gh` token to overcome github limits, fallback to gcm if gh is not working.
 github.gh_cli_tokens = true

@@ -118,6 +118,20 @@ url = "https://github.com/crate-ci/typos/releases/download/v1.47.2/typos-v1.47.2
 checksum = "sha256:23ca24a9186b5cb395b5f6c8eea8cdb02911c8980833e016454b56e90c3bd474"
 url = "https://github.com/crate-ci/typos/releases/download/v1.47.2/typos-v1.47.2-aarch64-apple-darwin.tar.gz"
 
+[[tools.uv]]
+version = "0.9.30"
+backend = "aqua:astral-sh/uv"
+
+[tools.uv."platforms.linux-x64"]
+checksum = "sha256:1caf8fe092e2005dd4c134ba515c1aa3eea3d3c143f8a1903bcb58fcdf169365"
+url = "https://github.com/astral-sh/uv/releases/download/0.9.30/uv-x86_64-unknown-linux-musl.tar.gz"
+provenance = "github-attestations"
+
+[tools.uv."platforms.macos-arm64"]
+checksum = "sha256:03a5d9ec7f7d588446b2ec226d13ff6300055e55365eca8f3fab39f342b0e805"
+url = "https://github.com/astral-sh/uv/releases/download/0.9.30/uv-aarch64-apple-darwin.tar.gz"
+provenance = "github-attestations"
+
 [[tools.yamlfmt]]
 version = "0.21.0"
 backend = "aqua:google/yamlfmt"
