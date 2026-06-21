@@ -1,0 +1,23 @@
+# typos config — https://github.com/crate-ci/typos
+# Silence project-specific false positives here rather than disabling the step.
+
+[files]
+# Paths typos should never look at (binary/generated).
+extend-exclude = [
+  "build/",
+  "mise.lock",
+]
+
+[default.extend-words]
+# Whole words to treat as correct, e.g.:
+Sherif = "Sherif" # the author's name; not a typo of "Sheriff"
+# AWS service/region tokens commonly tripped by spell-check live here. Add as found:
+# (regions.json / services.json carry AWS identifiers, not prose.)
+
+[default.extend-identifiers]
+# Code identifiers to treat as correct, e.g.:
+# inout = "inout"
+
+[default]
+# Regexes whose matches are ignored entirely, e.g.:
+# extend-ignore-re = ["(?i)\\bfoobar\\b"]

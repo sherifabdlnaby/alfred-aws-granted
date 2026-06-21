@@ -1,0 +1,74 @@
+// hk.pkl — git hooks for hk. See https://hk.jdx.dev. Pinned to the installed hk (`hk version`).
+amends "package://github.com/jdx/hk/releases/download/v1.47.0/hk@1.47.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.47.0/hk@1.47.0#/Builtins.pkl"
+
+// Repo-wide ignores — committed paths only (.gitignore is already honored).
+// Excludes binary assets (no text linter applies) and build artifacts from every step.
+// NOTE: SVGs under services/ are NOT excluded — generic whitespace/newline checks still
+// apply to them; no SVG-specific linter exists (coverage gap, documented in AGENTS.md).
+local commonIgnores =
+  List(
+    "*.png",
+    "*.gif",
+    "build/**",
+  )
+
+// Linters defined once, shared by the hooks below.
+local linters: Mapping<String, Step> = new Mapping<String, Step> {
+  // JSON formatting (regions.json, services.json). Scoped to *.json only so it
+  // doesn't fight yamlfmt/rumdl over YAML/Markdown (prettier's default glob covers those).
+  ["prettier"] = (Builtins.prettier) { glob = List("*.json") }
+
+  // Generic file hygiene (these also cover the SVG assets — the only checks that do)
+  ["newlines"] = Builtins.newlines
+  ["trailing_whitespace"] = Builtins.trailing_whitespace
+  ["mixed_line_ending"] = Builtins.mixed_line_ending
+  ["byte_order_marker"] = Builtins.byte_order_marker
+  ["check_added_large_files"] = Builtins.check_added_large_files
+  ["check_executables_have_shebangs"] = Builtins.check_executables_have_shebangs
+  ["check_case_conflict"] = Builtins.check_case_conflict
+  ["check_merge_conflict"] = Builtins.check_merge_conflict
+  ["check_symlinks"] = Builtins.check_symlinks
+  ["detect_private_key"] = Builtins.detect_private_key
+
+  // Config-file formats
+  ["mise"] = Builtins.mise
+  ["taplo"] = Builtins.taplo
+  ["yamllint"] = Builtins.yamllint
+  ["yamlfmt"] = Builtins.yamlfmt
+
+  // GitHub Actions
+  ["actionlint"] = Builtins.actionlint
+  ["zizmor"] = Builtins.zizmor
+  ["pinact"] = Builtins.pinact
+
+  // Secrets & spelling
+  ["betterleaks"] = Builtins.betterleaks
+  ["typos"] = Builtins.typos
+
+  // Docs / links
+  ["lychee"] = Builtins.lychee
+  ["rumdl"] = Builtins.rumdl
+}
+
+exclude = commonIgnores
+
+hooks {
+  // `hk check` / `mise run check` — CI + manual lint (read-only; `--fix` applies).
+  ["check"] {
+    steps = linters
+  }
+
+  // `git commit` (staged) — fix inline; stash guards unstaged hunks.
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps = linters
+  }
+
+  // `git push` — no-op; add slower gates here.
+  ["pre-push"] {
+    steps {
+    }
+  }
+}
