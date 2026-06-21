@@ -376,7 +376,7 @@ echo ']}'</string>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string># I know it's lazy :3 
+				<string># I know it's lazy :3
 
 export GRANTED_ALIAS_CONFIGURED="true";
 
@@ -546,7 +546,7 @@ fi</string>
 - Use ⌘ to open to Console without selecting a service.
 - Use ⎇ to open to a specific region (By default granted uses Profile's region).
 
-This requires `granted` tool to be installed, go to granted.dev 
+This requires `granted` tool to be installed, go to granted.dev
 Or:
 - &gt; brew tap common-fate/granted
 - &gt; brew install granted</string>
