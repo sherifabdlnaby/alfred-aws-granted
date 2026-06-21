@@ -21,7 +21,6 @@ version-resolver:
       - 'bug'
       - 'hotfix'
   default: 'patch'
-
 categories:
   - title: '🚀 Enhancements'
     labels:
@@ -42,33 +41,26 @@ categories:
   - title: '📝 Documentation'
     labels:
       - 'docs'
-
 autolabeler:
   - label: 'docs'
     files:
       - '*.md'
   - label: 'enhancement'
     title: '/enhancement|fixes/i'
-
   - label: 'upgrades'
     title: '/⬆️/i'
-
   - label: 'bug'
     title: '/🐛|🐞|bug|bugfix/i'
-
   - label: 'auto-update'
     title: '/🤖/i'
-
   - label: 'feature'
     title: '/🚀|🎉/i'
-
 change-template: |
   <details>
     <summary>$TITLE @$AUTHOR (#$NUMBER)</summary>
 
     $BODY
   </details>
-
 template: |
   ## Changes
 

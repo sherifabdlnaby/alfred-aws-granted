@@ -1,0 +1,11 @@
+# rumdl config — https://github.com/rvben/rumdl (markdownlint-compatible)
+# Tune Markdown rules here. The default rule set is the full markdownlint suite.
+
+[global]
+# Don't write a .rumdl_cache/ dir (hk only lints staged files).
+cache = false
+disable = [
+  "MD013", # line length — noisy on prose
+  "MD033", # inline HTML — README centers the demo gif with <p>/<img>
+  "MD041", # first-line H1 — issue/PR templates legitimately don't start with a heading
+]

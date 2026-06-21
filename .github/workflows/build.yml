@@ -1,37 +1,44 @@
-name: Build Worklfow
-
+name: Build Workflow
+# On a published release: build the .alfredworkflow via `mise run build` (the same
+# task local dev runs) and upload it to the release. See references/ci.md.
 on:
   release:
     types: [published]
-
+# Default to read-only; the upload step needs write to attach the artifact.
 permissions:
-  contents: write
-
+  contents: read
 jobs:
   publish:
     name: "Build & Publish"
     runs-on: ubuntu-latest
     environment: build
+    permissions:
+      contents: write # upload the built artifact onto the release
     steps:
-      - id: checkout
-        uses: actions/checkout@v3
-
-      - name: Create Alfred Workflow
-        id: create_alfred_workflow
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          install_args: "--locked" # honor mise.lock
+          cache: false # one-shot release build; no cache to poison (zizmor: cache-poisoning)
+          experimental: true
         env:
-          VERSION: ${{ github.event.release.tag_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # so tool installs don't hit API rate limits
+      - name: Build .alfredworkflow
+        id: build
+        env:
+          VERSION: ${{ github.event.release.tag_name }} # via env, never interpolated into the shell
         run: |
           set -e
-          # Alfred adds the version number to the workflow name, so we need to remove the "v" prefix
-          
-          # Zip up the workflow
-          version_without_v=$(echo "${VERSION}" | sed 's/^v//')
-          sed -i "s/1.3.37/${version_without_v}/g" "info.plist"
-          
-          mkdir -p build
-          find . -not -path '*/.git*' -exec zip --symlinks "build/alfred-granted-${VERSION}.alfredworkflow" {} +
-          echo "artifactPath=build/alfred-granted-${VERSION}.alfredworkflow" >> $GITHUB_ENV
-
-      - uses: diamondburned/action-upload-release@main
+          # Same build task local dev runs; --version stamps the tag into a throwaway
+          # copy of info.plist, then restores the placeholder so the tree stays clean.
+          mise run build --version "${VERSION}"
+          echo "artifactPath=build/alfred-granted-${VERSION}.alfredworkflow" >> "$GITHUB_OUTPUT"
+      - name: Upload artifact to release
+        uses: diamondburned/action-upload-release@7db8db63a78c06f926781e117394719b303ddfc7 # v0.0.1
         with:
-          files: ${{ env.artifactPath }}
+          files: ${{ steps.build.outputs.artifactPath }}

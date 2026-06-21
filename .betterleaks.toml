@@ -1,0 +1,18 @@
+# betterleaks config — https://github.com/betterleaks/betterleaks
+# gitleaks-compatible secret scanner. Keep the built-in rules; add allowlist entries
+# below for confirmed false positives (example ARNs, account IDs) instead of disabling.
+
+[extend]
+useDefault = true
+
+[allowlist]
+# This is a data repo describing AWS resources; example ARNs / 12-digit account IDs
+# in regions.json / services.json are not secrets. Allowlist confirmed ones here:
+# regexes = [
+#   '''arn:aws:[^"']+''',
+#   '''\b\d{12}\b''',
+# ]
+# stopwords = [
+#   "example",
+#   "sample",
+# ]
