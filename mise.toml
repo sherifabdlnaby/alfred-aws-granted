@@ -53,9 +53,8 @@ hk check $ff ${usage_fix:+--fix} ${usage_all:+--all} ${usage_pr:+--pr} \
 
 [tasks.test]
 description = "Run tests (none — this is a data-only workflow)"
-depends = [
-  "lint",
-] # ordering only; depends run in parallel, don't see this task's env
+# ordering only; depends run in parallel, don't see this task's env
+depends = ["lint"]
 run = "echo 'No tests — data-only workflow.'"
 
 [tasks.setup] # one-time, idempotent bootstrap; re-run when `enter` warns it's stale
