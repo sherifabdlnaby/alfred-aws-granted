@@ -1,6 +1,6 @@
 # Minimum `mise` version. If not matched, mise guides the user to update.
 # -> Bump when relying on a newly introduced setting.
-min_version = "2026.6.4" # CVE floor; raise as needed.
+min_version = "2026.6.6" # untrusted-config floor; raise when relying on newer settings.
 
 # ── 🛠️ tools ──────────────────────────────────────────────────────────────────
 # This is a DATA-only Alfred workflow (plist/JSON/SVG/images) — there is NO
@@ -22,7 +22,7 @@ pinact = "4"        # GitHub Actions pin SHAs
 betterleaks = "1"   # secret scanner
 
 # pre-commit
-hk = "1.47.0" # full MAJOR.MINOR.PATCH — git-tag backend (matches `hk init`)
+hk = "1.49.0" # full MAJOR.MINOR.PATCH — must match hk.pkl amends/import URLs
 
 # yamllint ships only via pipx (pure-Python). uv installs it; see pipx.uvx below.
 uv = "0.9"
@@ -122,8 +122,9 @@ run = '[ "$(cat .mise/setup 2>/dev/null)" = "{{vars.setup_version}}" ] || echo "
 
 # ── 🪝 hooks ──────────────────────────────────────────────────────────────────
 [hooks]
-enter = "mise run setup:check"    # nudge users when their setup is stale (see vars.setup_version)
-postinstall = "hk install --mise" # canonical hook install: runs after every `mise install`, idempotent
+# MISE_OFFLINE stops this `mise run` re-resolving tools online on every `cd` (hangs the shell offline).
+enter = "MISE_OFFLINE=1 mise run setup:check"
+postinstall = "hk install --mise"             # canonical hook install: runs after every `mise install`, idempotent
 
 # ── ⚙️ settings ───────────────────────────────────────────────────────────────
 [settings]
