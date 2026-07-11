@@ -49,15 +49,32 @@ This is a **data-only** Alfred workflow: it's `info.plist`, `regions.json`, `ser
 
 The project uses [**mise**](https://mise.jdx.dev) to pin its lint/format tools, expose tasks, and wire git hooks (no language runtime is needed).
 
-1. **Install mise** — see the [getting-started guide](https://mise.jdx.dev/getting-started.html) (e.g. `curl https://mise.run | sh`).
-2. **Set up the repo** (once, and per new clone/worktree):
+<details>
+<summary><b>Install mise</b> (first time on this machine)</summary>
+
+```sh
+brew install mise   # macOS / Linux (Homebrew)
+# or: apt / dnf / pacman — see https://mise.jdx.dev/installing-mise.html
+```
+
+Activate it in your shell, then confirm:
+
+```sh
+echo 'eval "$(mise activate zsh)"' >> ~/.zshrc   # zsh; use bashrc for bash
+# restart the shell
+mise doctor
+```
+
+</details>
+
+1. **Set up the repo** (once, and per new clone/worktree):
 
    ```sh
    mise trust && mise run setup
    ```
 
    `setup` installs the pinned tools and, via the `postinstall` hook, the [hk](https://hk.jdx.dev) pre-commit hook.
-3. **Common tasks:**
+2. **Common tasks:**
 
    ```sh
    mise run check          # run all linters/formatters (alias: lint); add --fix to auto-fix

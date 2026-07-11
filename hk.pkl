@@ -1,6 +1,6 @@
 // hk.pkl — git hooks for hk. See https://hk.jdx.dev. Pinned to the installed hk (`hk version`).
-amends "package://github.com/jdx/hk/releases/download/v1.47.0/hk@1.47.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.47.0/hk@1.47.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Builtins.pkl"
 
 // Repo-wide ignores — committed paths only (.gitignore is already honored).
 // Excludes binary assets (no text linter applies) and build artifacts from every step.
@@ -72,6 +72,14 @@ hooks {
   // `git push` — no-op; add slower gates here.
   ["pre-push"] {
     steps {
+      // ["test"] { check = "mise run test" }
+    }
+  }
+
+  // Commit message ({{commit_msg_file}}) — no-op.
+  ["commit-msg"] {
+    steps {
+      // ["conventional-commit"] = Builtins.check_conventional_commit
     }
   }
 }
