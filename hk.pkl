@@ -40,7 +40,10 @@ local linters: Mapping<String, Step> = new Mapping<String, Step> {
   // GitHub Actions
   ["actionlint"] = Builtins.actionlint
   ["zizmor"] = Builtins.zizmor
-  ["pinact"] = Builtins.pinact
+  ["pinact"] = (Builtins.pinact) {
+    check_diff = "PINACT_GITHUB_TOKEN=\"${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}\" " + Builtins.pinact.check_diff
+    fix = "PINACT_GITHUB_TOKEN=\"${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}\" " + Builtins.pinact.fix
+  }
 
   // Secrets & spelling
   ["betterleaks"] = Builtins.betterleaks
