@@ -1,0 +1,351 @@
+name: Release
+# PR merge → semver tag → build .alfredworkflow → attest → publish, notes generated.
+# Auto-tag-on-merge model: the merged PR's bump label decides the version; the pipeline tags,
+# builds, attests, and publishes from the merge. Linting is a separate workflow (lint.yml).
+#
+# The version contract (this file is the single source of truth for it):
+#   open PR ........................ bump gate: no bump label fails the job; a sticky comment previews
+#                                    the exact tag a merge would cut (refreshed after each stable release)
+#   merged PR, no bump label ....... default `patch` (the gate's fallback when merged anyway)
+#   merged PR, multiple labels ..... precedence major > minor > patch
+#   `skip-release` label ........... abort, cut nothing
+#   dispatch, explicit `version` ... use verbatim (via env, never interpolated); v-prefixed if missing
+#   dispatch, `prerelease: true` ... cut `-rc.N` of the computed bump; N increments vs existing rc tags
+#   release candidate .............. `--prerelease`, never `--latest`; does NOT consume the bump label
+#   stable after an rc ............. `--notes-start-tag <last-stable>` so notes cover the whole line
+#
+# Label taxonomy: bump labels (major/minor/patch/skip-release) drive the version; category labels
+# (enhancement/bug/docs...) only group the generated notes — applied by the `autolabel` job below
+# (config: .github/release-drafter.yml), grouped via .github/release.yml. Keep the two sets separate.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    # edited: re-apply title-regex labels on retitle; labeled/unlabeled: re-run the bump gate/preview
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Explicit version (e.g. v1.2.3 or v1.2.3-rc.1). Empty = auto-detect from labels/bump."
+        required: false
+        type: string
+      bump:
+        description: "Bump when no explicit version is given."
+        required: false
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      prerelease:
+        description: "Cut a release candidate (-rc.N) of the computed bump."
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: "Keep the release as a draft after building."
+        required: false
+        type: boolean
+        default: false
+# Default read-only; each job widens only what it needs.
+permissions:
+  contents: read
+# Release runs queue WHOLE (version + release), so back-to-back merges compute their tags serially —
+# unqueued version jobs would read the same latest tag and collide on it. PR runs (autolabel) keep
+# per-PR cancel-superseded. Caveat: GitHub keeps at most ONE pending run per group, so on rapid merges
+# a superseded pending run is dropped; its changes still land in the next release's notes, but its
+# bump label isn't consumed (re-run the dropped run from the UI if that bump mattered).
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('autolabel-{0}', github.event.pull_request.number) || 'release' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  # ── Autolabel PRs + bump gate/preview (category labels for the notes; nothing is released here) ──
+  # Fork PRs carry a read-only token, so labeling/commenting 403s there — acceptable for a solo repo;
+  # the gate still fails the run. (pull_request_target would fix the 403 but runs with elevated
+  # permissions; avoid unless you need it.)
+  autolabel:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0 # tags, so the preview can compute the next version
+          persist-credentials: false
+      # The dedicated autolabeler sub-action (split out of the main action in release-drafter v7).
+      - uses: release-drafter/release-drafter/autolabeler@4d75298e00d9e34c483e5ff8c68d0ea1c1940c1e # v7.5.1
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Bump gate + version preview: one sticky comment shows the exact tag a merge would cut,
+      # recomputed on every label change; no bump label fails the job (make it a required check to
+      # enforce — release runs still fall back to `patch` if an unlabeled PR merges anyway).
+      - name: Bump gate & version preview
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }} # via env, never interpolated (zizmor: template-injection)
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          MARKER="<!-- bump-preview -->"
+          # Keep in sync with the release job's "Refresh bump previews" step.
+          last_stable() { git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true; }
+          next_version() { # $1 = bump
+            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+            IFS='.' read -r MA MI PA <<< "${PREV#v}"
+            case "$1" in
+              major) MA=$((MA + 1)); MI=0; PA=0 ;;
+              minor) MI=$((MI + 1)); PA=0 ;;
+              *)     PA=$((PA + 1)) ;;
+            esac
+            echo "v${MA}.${MI}.${PA}"
+          }
+          bump_of() { # exact label match, precedence skip > major > minor > patch
+            case ",$1," in
+              *,skip-release,*) echo skip ;;
+              *,major,*) echo major ;;
+              *,minor,*) echo minor ;;
+              *,patch,*) echo patch ;;
+              *) echo "" ;;
+            esac
+          }
+          BUMP="$(bump_of "$LABELS")"
+          case "$BUMP" in
+            skip) BODY="$MARKER 🏷️ \`skip-release\` — merging this PR cuts no release." ;;
+            "")   BODY="$MARKER ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; merged as-is this falls back to \`patch\` → **$(next_version patch)**." ;;
+            *)    BODY="$MARKER 🔖 Merging this PR cuts **$(next_version "$BUMP")** (\`$BUMP\`)." ;;
+          esac
+          CID="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq "map(select(.body|startswith(\"$MARKER\")))[0].id // empty" || true)"
+          if [ -n "$CID" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$CID" -f body="$BODY" >/dev/null \
+              || echo "::warning::could not update the preview comment (fork PR?)"
+          else
+            gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" -f body="$BODY" >/dev/null \
+              || echo "::warning::could not post the preview comment (fork PR?)"
+          fi
+          if [ -z "$BUMP" ]; then
+            echo "::error::No bump label (major/minor/patch/skip-release) on this PR — add one; an unlabeled merge falls back to patch."
+            exit 1
+          fi
+  # ── Resolve the next version from labels or dispatch inputs ──
+  version:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # reads tags + PR metadata via GH_TOKEN; no push
+    outputs:
+      new_tag: ${{ steps.compute.outputs.new_tag }}
+      prerelease: ${{ steps.compute.outputs.prerelease }}
+      notes_start: ${{ steps.compute.outputs.notes_start }}
+      pr_number: ${{ steps.pr.outputs.number }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Find merged PR and read bump label
+        if: github.event_name == 'push'
+        id: pr
+        env:
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # A real API failure fails the step (a flaky call must not silently skip a release);
+          # only an empty result (direct push, no merged PR) skips.
+          PR_JSON=$(gh api "repos/${REPO}/commits/${SHA}/pulls" \
+            --jq '[.[] | select(.merged_at != null and .base.ref == "main")] | .[0] // empty')
+          if [ -z "$PR_JSON" ]; then
+            echo "No merged PR for ${SHA}; nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          LABELS=$(echo "$PR_JSON" | jq -r '[.labels[].name] | join(",")')
+          echo "number=$(echo "$PR_JSON" | jq -r '.number')" >> "$GITHUB_OUTPUT"
+          # Exact label match (grep -w would also hit e.g. `major-redesign`).
+          # Precedence skip-release > major > minor > patch; default patch.
+          case ",${LABELS}," in
+            *,skip-release,*) echo "skip=true"   >> "$GITHUB_OUTPUT"; exit 0 ;;
+            *,major,*)        echo "bump=major"  >> "$GITHUB_OUTPUT" ;;
+            *,minor,*)        echo "bump=minor"  >> "$GITHUB_OUTPUT" ;;
+            *)                echo "bump=patch"  >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Compute next version
+        if: >-
+          (github.event_name == 'push' && steps.pr.outputs.skip != 'true') || github.event_name == 'workflow_dispatch'
+        id: compute
+        env:
+          INPUT_VERSION: ${{ inputs.version }} # user-controllable; via env, never interpolated (zizmor: template-injection)
+          INPUT_BUMP: ${{ inputs.bump }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+          LABEL_BUMP: ${{ steps.pr.outputs.bump }}
+        run: |
+          set -euo pipefail
+
+          # Latest stable tag (excludes any pre-release like -rc.N). `|| true`: with no stable tag yet,
+          # grep exits 1 and would trip pipefail — first release must return empty, not crash.
+          last_stable() { git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true; }
+
+          # 1) Explicit dispatch version wins, used verbatim.
+          if [ -n "${INPUT_VERSION}" ]; then
+            NEW_TAG="${INPUT_VERSION}"; [ "${NEW_TAG#v}" = "${NEW_TAG}" ] && NEW_TAG="v${NEW_TAG}"
+          else
+            # 2) Otherwise bump the latest stable. Bump source: PR label (push) or dispatch input.
+            BUMP="${LABEL_BUMP:-${INPUT_BUMP:-patch}}"
+            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+            IFS='.' read -r MA MI PA <<< "${PREV#v}"; PA="${PA%%-*}"
+            case "$BUMP" in
+              major) MA=$((MA + 1)); MI=0; PA=0 ;;
+              minor) MI=$((MI + 1)); PA=0 ;;
+              *)     PA=$((PA + 1)) ;;
+            esac
+            BASE="v${MA}.${MI}.${PA}"
+            if [ "${INPUT_PRERELEASE}" = "true" ]; then
+              # Next rc number for this base.
+              LAST_RC="$(git tag -l "${BASE}-rc.*" --sort=-v:refname | head -1)"
+              N=1; [ -n "$LAST_RC" ] && N=$(( ${LAST_RC##*-rc.} + 1 ))
+              NEW_TAG="${BASE}-rc.${N}"
+            else
+              NEW_TAG="$BASE"
+            fi
+          fi
+
+          # A pre-release tag carries a '-'.
+          case "$NEW_TAG" in *-*) PRE=true ;; *) PRE=false ;; esac
+
+          # For a stable release, generate notes since the last stable (not the last rc) so the whole
+          # line is covered. Empty for the very first release.
+          NOTES_START=""; [ "$PRE" = false ] && NOTES_START="$(last_stable)"
+
+          {
+            echo "new_tag=$NEW_TAG"
+            echo "prerelease=$PRE"
+            echo "notes_start=$NOTES_START"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved: $NEW_TAG (prerelease=$PRE, notes-start='${NOTES_START}')"
+  # ── Tag, build, attest, publish ──
+  release:
+    needs: version
+    if: needs.version.outputs.new_tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the tag + create the release
+      id-token: write # keyless attestation (OIDC)
+      attestations: write # provenance for the artifact
+      pull-requests: write # comment the release back on the PR
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Keeps the checkout token: the next step pushes the tag with it.
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3 # zizmor: ignore[artipacked] -- this job pushes the release tag
+        with:
+          fetch-depth: 0
+      - name: Create and push tag
+        env:
+          TAG: ${{ needs.version.outputs.new_tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "${TAG}"; then
+            echo "Tag ${TAG} already exists."; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "${TAG}"
+      - name: Setup mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          install_args: "--locked" # honor mise.lock
+          cache: false # one-shot release build; no cache to poison (zizmor: cache-poisoning)
+          experimental: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # so tool installs don't hit API rate limits
+      - name: Build artifacts
+        env:
+          VERSION: ${{ needs.version.outputs.new_tag }}
+        run: |
+          set -euo pipefail
+          # Same build task local dev runs; it stamps VERSION and drops the .alfredworkflow under build/.
+          mise run build --version "${VERSION}"
+          ( cd build && sha256sum ./* > checksums.txt )
+      # Provenance for every published artifact (the checksums file covers the set). The principle is
+      # artifact-agnostic: bundles get attested just like images do. Consumers verify with
+      # `gh attestation verify <file> --owner sherifabdlnaby` (documented in the README).
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: "build/*"
+      - name: Publish release
+        env:
+          TAG: ${{ needs.version.outputs.new_tag }}
+          PRE: ${{ needs.version.outputs.prerelease }}
+          NOTES_START: ${{ needs.version.outputs.notes_start }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          set -euo pipefail
+          args=(--title "$TAG" --generate-notes)
+          # --latest only for a stable, non-draft release (a draft isn't "latest" until published).
+          if [ "$PRE" = true ]; then args+=(--prerelease)
+          elif [ "$DRAFT" != true ]; then args+=(--latest); fi
+          [ -n "$NOTES_START" ] && args+=(--notes-start-tag "$NOTES_START")
+          [ "$DRAFT" = true ] && args+=(--draft)
+          # Uploads the bundle and its checksums directly (no third-party upload action).
+          gh release create "$TAG" build/* "${args[@]}"
+      - name: Comment on the merged PR
+        if: github.event_name == 'push' && needs.version.outputs.pr_number != ''
+        env:
+          TAG: ${{ needs.version.outputs.new_tag }}
+          PR_NUMBER: ${{ needs.version.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "🚀 **Release ${TAG}** published: https://github.com/${REPO}/releases/tag/${TAG}"
+      # The base version just moved, so open PRs' bump previews are stale — recompute them. Stable
+      # releases only (an rc doesn't move the last stable). Updates existing preview comments only;
+      # a PR gets its first one from its own PR events (the autolabel job).
+      - name: Refresh bump previews on open PRs
+        if: needs.version.outputs.prerelease == 'false'
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          MARKER="<!-- bump-preview -->"
+          # Keep in sync with the autolabel job's "Bump gate & version preview" step.
+          last_stable() { git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true; }
+          next_version() { # $1 = bump
+            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+            IFS='.' read -r MA MI PA <<< "${PREV#v}"
+            case "$1" in
+              major) MA=$((MA + 1)); MI=0; PA=0 ;;
+              minor) MI=$((MI + 1)); PA=0 ;;
+              *)     PA=$((PA + 1)) ;;
+            esac
+            echo "v${MA}.${MI}.${PA}"
+          }
+          bump_of() {
+            case ",$1," in
+              *,skip-release,*) echo skip ;;
+              *,major,*) echo major ;;
+              *,minor,*) echo minor ;;
+              *,patch,*) echo patch ;;
+              *) echo "" ;;
+            esac
+          }
+          gh pr list --state open --json number --jq '.[].number' | while read -r NUM; do
+            CID="$(gh api "repos/$REPO/issues/$NUM/comments" \
+              --jq "map(select(.body|startswith(\"$MARKER\")))[0].id // empty")"
+            [ -z "$CID" ] && continue
+            LABELS="$(gh api "repos/$REPO/issues/$NUM/labels" --jq 'map(.name) | join(",")')"
+            BUMP="$(bump_of "$LABELS")"
+            case "$BUMP" in
+              skip) BODY="$MARKER 🏷️ \`skip-release\` — merging this PR cuts no release." ;;
+              "")   BODY="$MARKER ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; merged as-is this falls back to \`patch\` → **$(next_version patch)**." ;;
+              *)    BODY="$MARKER 🔖 Merging this PR cuts **$(next_version "$BUMP")** (\`$BUMP\`)." ;;
+            esac
+            gh api -X PATCH "repos/$REPO/issues/comments/$CID" -f body="$BODY" >/dev/null
+          done
