@@ -27,6 +27,12 @@ This workflow is a wrapper around [granted](https://granted.dev) CLI tool. Most 
 
 [Download](https://github.com/sherifabdlnaby/alfred-aws-granted/releases/latest) the latest `alfred-granted-*.alfredworkflow` file from [Releases](https://github.com/sherifabdlnaby/alfred-aws-granted/releases/latest).
 
+Each release bundle ships with a build-provenance attestation. To verify it came from this repo's pipeline before installing:
+
+```bash
+gh attestation verify alfred-granted-*.alfredworkflow --owner sherifabdlnaby
+```
+
 ## Usage
 
 1. Open Alfred and type `aws` to see the list of AWS Accounts you have access to.
@@ -83,7 +89,7 @@ mise doctor
    mise run <task> --help  # a task's flags
    ```
 
-Commits automatically run the same `check` pipeline on staged files via hk. Fix any failures with `mise run check --fix`. CI runs `mise run check` on every PR, and a published release builds and uploads the `.alfredworkflow` automatically.
+Commits automatically run the same `check` pipeline on staged files via hk. Fix any failures with `mise run check --fix`. CI runs `mise run check` on every PR. Releases are label-driven: the `major`/`minor`/`patch`/`skip-release` label on a merged PR bumps the version, and the pipeline tags it, builds the `.alfredworkflow`, attests its provenance, and publishes the release automatically.
 
 See [`AGENTS.md`](./AGENTS.md) for how to extend the data/tooling (including for AI agents).
 
