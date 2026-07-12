@@ -7,8 +7,8 @@ updates:
     schedule:
       interval: weekly
     cooldown:
+      # Actions tags are not SemVer-typed; only default-days is valid here.
       default-days: 7
-      semver-major-days: 14
     groups:
       github-actions:
         patterns: ["*"]
