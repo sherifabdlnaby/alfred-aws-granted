@@ -89,7 +89,7 @@ mise doctor
    mise run <task> --help  # a task's flags
    ```
 
-Commits automatically run the same `check` pipeline on staged files via hk. Fix any failures with `mise run check --fix`. CI runs `mise run check` on every PR. Releases are label-driven: the `major`/`minor`/`patch`/`skip-release` label on a merged PR bumps the version, and the pipeline tags it, builds the `.alfredworkflow`, attests its provenance, and publishes the release automatically.
+Commits automatically run the same `check` pipeline on staged files via hk. Fix any failures with `mise run check --fix`. CI runs `mise run check` (and a build smoke) on every PR. Releases are label-driven: add one of `major` / `minor` / `patch` / `skip-release` on the PR; merging tags, builds the `.alfredworkflow`, attests provenance, and publishes. Unlabeled merges fall back to `minor`.
 
 See [`AGENTS.md`](./AGENTS.md) for how to extend the data/tooling (including for AI agents).
 

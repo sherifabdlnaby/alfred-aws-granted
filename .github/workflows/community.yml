@@ -1,0 +1,59 @@
+# Community janitors (stale PRs + lock closed threads).
+# First landing is observe-only: stale runs in debug-only (no closes); lock stays
+# gated behind repo variable COMMUNITY_ARM=true until armed after a few sweeps.
+name: Community
+on:
+  schedule:
+    - cron: "0 12 * * *" # daily noon UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: community
+  cancel-in-progress: false
+jobs:
+  stale:
+    name: stale
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@1e223db275d687790206a7acac4d1a11bd6fe629 # v10.4.0
+        with:
+          # Observe-only until armed: set debug-only to false after a few dry runs look right.
+          debug-only: true
+          days-before-issue-stale: -1 # issues disabled on this repo; never stale issues
+          days-before-pr-stale: 30
+          days-before-pr-close: 14
+          stale-pr-label: stale
+          exempt-pr-labels: pinned,security
+          operations-per-run: 30
+          stale-pr-message: >
+            This PR has been idle for a while. Marking it stale — rebase and push (or comment) to keep it alive, or it will close in two weeks. Reopen anytime.
+
+          close-pr-message: >
+            Closing as stale. Reopen when you're ready to rebase and continue.
+
+  lock:
+    name: lock
+    # Arm by setting repo variable COMMUNITY_ARM=true (Settings → Variables).
+    if: ${{ vars.COMMUNITY_ARM == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c # v6.0.2
+        with:
+          process-only: "prs"
+          pr-inactive-days: "90"
+          pr-lock-reason: "resolved"
+          pr-comment: >
+            Locking this closed PR after 90 days of inactivity. Open a new issue or PR that links back here if you still need something.
+
+          log-output: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

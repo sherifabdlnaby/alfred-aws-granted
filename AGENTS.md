@@ -24,6 +24,10 @@ Prefer `mise run <task>` over calling the tool directly, so local, hooks, and CI
 
 Commits run [hk](https://hk.jdx.dev), the same `check` CI runs, to format and lint staged files. Fix failures with `mise run check --fix`. Don't disable steps to push a commit through; `git commit --no-verify` skips hooks for a WIP commit.
 
+## Releases
+
+Merging to `main` with a bump label (`major` / `minor` / `patch`) tags, builds the `.alfredworkflow`, attests provenance, and publishes a GitHub Release. Use `skip-release` when the change should not cut a version. Category labels (`feature`, `bug`, `docs`, `ci`, …) only group the generated notes. Manual RC: Actions → Release → `prerelease: true`.
+
 ## Project notes
 
 - The workflow is **data + assets only**: `info.plist`, `regions.json`, `services.json`, `services/*.svg`, `icon.png`, `region.png`. Add/extend an account, region, or service by editing the JSON and (for a new service) dropping its `.svg` icon under `services/` — no code involved.
@@ -39,6 +43,6 @@ Changing tools, tasks, env, or hooks? Edit the config, don't bolt on scripts, th
 - **`mise.lock`**: resolved versions plus checksums. Commit it; regenerate with `mise install` then `mise lock --platform macos-arm64,linux-x64` after a `[tools]` change.
 - **`.mise/`**: project-local state (the `setup` stamp is gitignored; the directory is committed so the stamp has a home).
 - **`hk.pkl`**: the pre-commit and `check` pipeline (linters and formatters, in Pkl). Add or edit a lint step here.
-- Linter config scaffolds live at the repo root (`typos.toml`, `.betterleaks.toml`, `lychee.toml`, `rumdl.toml`, `.yamllint`).
+- Linter config scaffolds live at the repo root (`typos.toml`, `.betterleaks.toml`, `lychee.toml`, `rumdl.toml`, `.yamllint`) and `.github/zizmor.yml`.
 
 For tool, task, and hook syntax, see the [mise](https://mise.jdx.dev) and [hk](https://hk.jdx.dev) docs.

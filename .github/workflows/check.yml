@@ -1,6 +1,7 @@
 # Drives the project's own `mise run check` (the same task local dev + the pre-commit
 # hook use) and reports lint/format failures. On a PR it leaves one sticky comment
-# pointing the author at `mise run check --fix`. See references/ci.md.
+# pointing the author at `mise run check --fix`. Also validates `mise run build` so a
+# broken package cannot merge undetected. See references/platforms/github.md (cicd skill).
 name: 🎨 Linters, Validators, and Formatters
 on:
   pull_request: {}
@@ -15,10 +16,9 @@ on:
         type: choice
         options: [all, pr]
         default: all
-# Read the repo; comment on PRs to point the author at the fix command.
+# Default read-only; the check job widens to comment on PRs.
 permissions:
   contents: read
-  pull-requests: write
 # One run per PR (or ref) — newer pushes cancel stale runs.
 concurrency:
   group: lint-${{ github.event.pull_request.number || github.ref }}
@@ -27,6 +27,10 @@ jobs:
   check:
     name: check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # sticky comment pointing the author at the fix command
     env:
       # Pretty colors in the CI!
       CLICOLOR_FORCE: "1"
@@ -58,10 +62,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # used by pinact to verify pinned action annotations
         run: |
           # PRs check changed files (--pr); schedule/dispatch default to --all (dispatch can pick --pr).
-          [ "$EVENT" = pull_request ] && scope="pr" || scope="${SCOPE_INPUT:-all}"
+          if [ "$EVENT" = "pull_request" ]; then
+            scope="pr"
+          else
+            scope="${SCOPE_INPUT:-all}"
+          fi
           # hk's --pr resolves the base via origin/HEAD, which the Actions checkout never sets; point it
           # at the PR base so hk diffs origin/<base>...HEAD (else it finds 0 files and passes green).
-          [ "$scope" = "pr" ] && git remote set-head origin "$BASE_REF" >/dev/null 2>&1 || true
+          if [ "$scope" = "pr" ]; then
+            git remote set-head origin "$BASE_REF" >/dev/null 2>&1 || true
+          fi
           mise run check "--$scope" || {
             echo "::error::Lint & format failed on $REF_NAME — fix locally with 'mise run check --fix --$scope', then push. ('mise run setup' installs the pre-commit hook so this happens on every commit.)"
             exit 1
@@ -98,3 +108,30 @@ jobs:
             } else if (existing) {
               await github.rest.issues.deleteComment({ owner, repo, comment_id: existing.id });
             }
+  # Smoke-test the packaged artifact on every PR / schedule so a broken build cannot merge.
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          install_args: "--locked"
+          cache: true
+          experimental: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build .alfredworkflow
+        run: |
+          set -euo pipefail
+          # Throwaway version stamp; release.yml stamps the real tag on publish.
+          mise run build --version v0.0.0-ci
+          test -f build/alfred-granted-v0.0.0-ci.alfredworkflow
