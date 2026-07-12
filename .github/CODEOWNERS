@@ -1,0 +1,5 @@
+# CI / toolchain owners — paired with the branch ruleset requiring a review on these paths.
+.github/ @sherifabdlnaby
+mise.toml @sherifabdlnaby
+mise.lock @sherifabdlnaby
+hk.pkl @sherifabdlnaby

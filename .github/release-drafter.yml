@@ -1,8 +1,11 @@
-# release-drafter config, used by release.yml's `autolabel` job: the autolabeler sub-action runs it to
-# apply CATEGORY labels (enhancement/bug/docs...) on PRs, and the sibling .github/release.yml (GitHub's
-# native notes config) makes `gh release create --generate-notes` group by them. The version is computed
-# by release.yml's hand-rolled bump, so the version-resolver below stays commented (an active resolver
-# the bump ignores is drift bait). Keep the category labels in sync with .github/release.yml.
+# release-drafter config for the auto-tag model (release.yml):
+#   - the `autolabel` job runs the autolabeler sub-action against this file to apply
+#     category labels; `.github/release.yml` makes `gh release create --generate-notes`
+#     group by them. Version bump is computed by release.yml, so the version-resolver
+#     below stays commented (an active resolver the hand-rolled bump ignores is drift bait).
+#
+# Keep three sets consistent: category labels here, release.yml changelog categories,
+# and bump labels (major/minor/patch/skip-release) handled only by release.yml.
 categories:
   - title: "🚀 Enhancements"
     labels: ["enhancement", "feature"]
@@ -10,13 +13,19 @@ categories:
     labels: ["upgrades"]
   - title: "🐛 Bug Fixes"
     labels: ["fix", "bug", "hotfix"]
+  - title: "⚙️ CI & Build"
+    labels: ["ci", "build"]
   - title: "🤖 Automatic Updates"
     labels: ["auto-update"]
   - title: "📝 Documentation"
     labels: ["docs"]
 autolabeler:
   - label: "docs"
-    files: ["*.md"]
+    files: ["**/*.md"]
+    title: ['/\bdocs?\b|readme/i']
+  - label: "ci"
+    files: [".github/**", "mise.toml", "mise.lock", "hk.pkl"]
+    title: ['/\bci\b|workflow|pipeline|actions/i']
   - label: "enhancement"
     title: ["/enhancement/i"]
   - label: "upgrades"
@@ -37,12 +46,11 @@ template: |
   ## Changes
 
   $CHANGES
-# The auto-tag model in release.yml owns the version, so release-drafter never resolves it here.
-# Uncomment only if you switch back to the draft-then-publish model (auto-release workflow):
+# DRAFT model only — uncomment so release-drafter resolves the version from bump labels:
 # name-template: "v$RESOLVED_VERSION 🚀"
 # tag-template: "v$RESOLVED_VERSION"
 # version-resolver:
 #   major: { labels: ["major"] }
 #   minor: { labels: ["minor", "enhancement", "feature"] }
-#   patch: { labels: ["patch", "fix", "bug", "chore", "auto-update"] }
-#   default: patch
+#   patch: { labels: ["patch", "fix", "bug", "chore", "auto-update", "ci"] }
+#   default: minor

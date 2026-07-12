@@ -1,12 +1,16 @@
 name: Release
-# PR merge → semver tag → build .alfredworkflow → attest → publish, notes generated.
-# Auto-tag-on-merge model: the merged PR's bump label decides the version; the pipeline tags,
-# builds, attests, and publishes from the merge. Linting is a separate workflow (lint.yml).
+# Default (hand-rolled) release front-end: PR merge -> semver tag -> build -> publish, notes generated.
+# Copy and adapt. The build/publish back-end here is the "packaged artifact" shape (`mise run build`
+# + attach to the Release). Container images FOLD publish-sign.yml's push/sign/attest steps into the
+# release job below (a GITHUB_TOKEN-created release does not fire `release: published`, so the two
+# files won't chain on their own); Go binaries use GoReleaser — see the cicd runtime references.
+# Linting is a separate workflow (check.yml).
 #
 # The version contract (this file is the single source of truth for it):
 #   open PR ........................ bump gate: no bump label fails the job; a sticky comment previews
 #                                    the exact tag a merge would cut (refreshed after each stable release)
-#   merged PR, no bump label ....... default `patch` (the gate's fallback when merged anyway)
+#   merged PR, no bump label ....... default `minor` (the gate's fallback when merged anyway;
+#                                    patch is too easy to ship by accident, major is costly under immutable releases)
 #   merged PR, multiple labels ..... precedence major > minor > patch
 #   `skip-release` label ........... abort, cut nothing
 #   dispatch, explicit `version` ... use verbatim (via env, never interpolated); v-prefixed if missing
@@ -34,8 +38,8 @@ on:
         description: "Bump when no explicit version is given."
         required: false
         type: choice
-        options: [patch, minor, major]
-        default: patch
+        options: [minor, patch, major]
+        default: minor
       prerelease:
         description: "Cut a release candidate (-rc.N) of the computed bump."
         required: false
@@ -59,10 +63,11 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   # ── Autolabel PRs + bump gate/preview (category labels for the notes; nothing is released here) ──
-  # Fork PRs carry a read-only token, so labeling/commenting 403s there — acceptable for a solo repo;
+  # Fork PRs carry a read-only token, so labeling/commenting 403s there — acceptable for solo repos;
   # the gate still fails the run. (pull_request_target would fix the 403 but runs with elevated
   # permissions; avoid unless you need it.)
   autolabel:
+    timeout-minutes: 15
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -81,7 +86,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Bump gate + version preview: one sticky comment shows the exact tag a merge would cut,
       # recomputed on every label change; no bump label fails the job (make it a required check to
-      # enforce — release runs still fall back to `patch` if an unlabeled PR merges anyway).
+      # enforce — release runs still fall back to `minor` if an unlabeled PR merges anyway).
       - name: Bump gate & version preview
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -92,9 +97,8 @@ jobs:
           set -euo pipefail
           MARKER="<!-- bump-preview -->"
           # Keep in sync with the release job's "Refresh bump previews" step.
-          last_stable() { git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true; }
-          next_version() { # $1 = bump
-            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+          last_stable() { t="$(git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true)"; echo "${t:-v0.0.0}"; }
+          next_version() { # $1 = bump (reads $PREV)
             IFS='.' read -r MA MI PA <<< "${PREV#v}"
             case "$1" in
               major) MA=$((MA + 1)); MI=0; PA=0 ;;
@@ -112,14 +116,15 @@ jobs:
               *) echo "" ;;
             esac
           }
-          PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+          PREV="$(last_stable)"
           BUMP="$(bump_of "$LABELS")"
           # Preview as a table; the marker stays first so the sticky-comment lookup still matches.
+          NOTE=""
           case "$BUMP" in
-            skip) ROW="| \`$PREV\` | \`skip-release\` | — no release |"; NOTE="" ;;
-            "")   ROW="| \`$PREV\` | ⚠️ none | \`patch\` fallback → **\`$(next_version patch)\`** |"
-                  NOTE="> ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; an unlabeled merge falls back to \`patch\`." ;;
-            *)    ROW="| \`$PREV\` | \`$BUMP\` | **\`$(next_version "$BUMP")\`** |"; NOTE="" ;;
+            skip) ROW="| \`$PREV\` | \`skip-release\` | — no release |" ;;
+            "")   ROW="| \`$PREV\` | ⚠️ none | \`minor\` fallback → **\`$(next_version minor)\`** |"
+                  NOTE="> ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; an unlabeled merge falls back to \`minor\`." ;;
+            *)    ROW="| \`$PREV\` | \`$BUMP\` | **\`$(next_version "$BUMP")\`** |" ;;
           esac
           BODY="$MARKER"$'\n'"### 🔖 Release preview"$'\n\n'"| Current | Bump | On merge |"$'\n'"|:--|:--|:--|"$'\n'"$ROW"
           [ -n "$NOTE" ] && BODY="$BODY"$'\n\n'"$NOTE"
@@ -133,7 +138,7 @@ jobs:
               || echo "::warning::could not post the preview comment (fork PR?)"
           fi
           if [ -z "$BUMP" ]; then
-            echo "::error::No bump label (major/minor/patch/skip-release) on this PR — add one; an unlabeled merge falls back to patch."
+            echo "::error::No bump label (major/minor/patch/skip-release) on this PR — add one; an unlabeled merge falls back to minor."
             exit 1
           fi
   # ── Resolve the next version from labels or dispatch inputs ──
@@ -173,12 +178,13 @@ jobs:
           LABELS=$(echo "$PR_JSON" | jq -r '[.labels[].name] | join(",")')
           echo "number=$(echo "$PR_JSON" | jq -r '.number')" >> "$GITHUB_OUTPUT"
           # Exact label match (grep -w would also hit e.g. `major-redesign`).
-          # Precedence skip-release > major > minor > patch; default patch.
+          # Precedence skip-release > major > minor > patch; unlabeled default minor.
           case ",${LABELS}," in
             *,skip-release,*) echo "skip=true"   >> "$GITHUB_OUTPUT"; exit 0 ;;
             *,major,*)        echo "bump=major"  >> "$GITHUB_OUTPUT" ;;
             *,minor,*)        echo "bump=minor"  >> "$GITHUB_OUTPUT" ;;
-            *)                echo "bump=patch"  >> "$GITHUB_OUTPUT" ;;
+            *,patch,*)        echo "bump=patch"  >> "$GITHUB_OUTPUT" ;;
+            *)                echo "bump=minor"  >> "$GITHUB_OUTPUT" ;;
           esac
       - name: Compute next version
         if: >-
@@ -201,7 +207,7 @@ jobs:
             NEW_TAG="${INPUT_VERSION}"; [ "${NEW_TAG#v}" = "${NEW_TAG}" ] && NEW_TAG="v${NEW_TAG}"
           else
             # 2) Otherwise bump the latest stable. Bump source: PR label (push) or dispatch input.
-            BUMP="${LABEL_BUMP:-${INPUT_BUMP:-patch}}"
+            BUMP="${LABEL_BUMP:-${INPUT_BUMP:-minor}}"
             PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
             IFS='.' read -r MA MI PA <<< "${PREV#v}"; PA="${PA%%-*}"
             case "$BUMP" in
@@ -233,8 +239,9 @@ jobs:
             echo "notes_start=$NOTES_START"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved: $NEW_TAG (prerelease=$PRE, notes-start='${NOTES_START}')"
-  # ── Tag, build, attest, publish ──
+  # ── Tag, build, publish, attest ──
   release:
+    timeout-minutes: 15
     needs: version
     if: needs.version.outputs.new_tag != ''
     runs-on: ubuntu-latest
@@ -271,17 +278,17 @@ jobs:
           experimental: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # so tool installs don't hit API rate limits
-      - name: Build artifacts
+      - name: Build .alfredworkflow
         env:
           VERSION: ${{ needs.version.outputs.new_tag }}
         run: |
           set -euo pipefail
-          # Same build task local dev runs; it stamps VERSION and drops the .alfredworkflow under build/.
+          # Same build task local dev runs; --version stamps the tag into info.plist.
           mise run build --version "${VERSION}"
-          ( cd build && sha256sum ./* > checksums.txt )
+          # Checksum the bundle only (not checksums.txt itself).
+          ( cd build && sha256sum ./*.alfredworkflow > checksums.txt )
       # Provenance for every published artifact (the checksums file covers the set). The principle is
-      # artifact-agnostic: bundles get attested just like images do. Consumers verify with
-      # `gh attestation verify <file> --owner sherifabdlnaby` (documented in the README).
+      # artifact-agnostic: bundles get attested just like images do.
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
@@ -300,7 +307,6 @@ jobs:
           elif [ "$DRAFT" != true ]; then args+=(--latest); fi
           [ -n "$NOTES_START" ] && args+=(--notes-start-tag "$NOTES_START")
           [ "$DRAFT" = true ] && args+=(--draft)
-          # Uploads the bundle and its checksums directly (no third-party upload action).
           gh release create "$TAG" build/* "${args[@]}"
       # Generated notes say what changed; append a footer telling consumers how to install and verify
       # the artifact (SKILL.md#publish-sign-attest). Per-repo install steps live in
@@ -329,7 +335,13 @@ jobs:
           PR_NUMBER: ${{ needs.version.outputs.pr_number }}
           REPO: ${{ github.repository }}
         run: |
-          gh pr comment "$PR_NUMBER" --body "🚀 **Release ${TAG}** published: https://github.com/${REPO}/releases/tag/${TAG}"
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --body "🚀 **Release ${TAG}** published: https://github.com/${REPO}/releases/tag/${TAG}
+
+          Verify the bundle's provenance before installing:
+          \`\`\`bash
+          gh attestation verify alfred-granted-${TAG}.alfredworkflow --owner sherifabdlnaby
+          \`\`\`"
       # The base version just moved, so open PRs' bump previews are stale — recompute them. Stable
       # releases only (an rc doesn't move the last stable). Updates existing preview comments only;
       # a PR gets its first one from its own PR events (the autolabel job).
@@ -341,9 +353,8 @@ jobs:
           set -euo pipefail
           MARKER="<!-- bump-preview -->"
           # Keep in sync with the autolabel job's "Bump gate & version preview" step.
-          last_stable() { git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true; }
-          next_version() { # $1 = bump
-            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
+          last_stable() { t="$(git tag -l 'v*' --sort=-v:refname | grep -v '-' | head -1 || true)"; echo "${t:-v0.0.0}"; }
+          next_version() { # $1 = bump (reads $PREV)
             IFS='.' read -r MA MI PA <<< "${PREV#v}"
             case "$1" in
               major) MA=$((MA + 1)); MI=0; PA=0 ;;
@@ -361,18 +372,19 @@ jobs:
               *) echo "" ;;
             esac
           }
+          PREV="$(last_stable)"
           gh pr list --state open --json number --jq '.[].number' | while read -r NUM; do
             CID="$(gh api "repos/$REPO/issues/$NUM/comments" \
               --jq "map(select(.body|startswith(\"$MARKER\")))[0].id // empty")"
             [ -z "$CID" ] && continue
             LABELS="$(gh api "repos/$REPO/issues/$NUM/labels" --jq 'map(.name) | join(",")')"
-            PREV="$(last_stable)"; [ -z "$PREV" ] && PREV="v0.0.0"
             BUMP="$(bump_of "$LABELS")"
+            NOTE=""
             case "$BUMP" in
-              skip) ROW="| \`$PREV\` | \`skip-release\` | — no release |"; NOTE="" ;;
-              "")   ROW="| \`$PREV\` | ⚠️ none | \`patch\` fallback → **\`$(next_version patch)\`** |"
-                    NOTE="> ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; an unlabeled merge falls back to \`patch\`." ;;
-              *)    ROW="| \`$PREV\` | \`$BUMP\` | **\`$(next_version "$BUMP")\`** |"; NOTE="" ;;
+              skip) ROW="| \`$PREV\` | \`skip-release\` | — no release |" ;;
+              "")   ROW="| \`$PREV\` | ⚠️ none | \`minor\` fallback → **\`$(next_version minor)\`** |"
+                    NOTE="> ⚠️ No bump label (\`major\`/\`minor\`/\`patch\`/\`skip-release\`) — the gate fails; an unlabeled merge falls back to \`minor\`." ;;
+              *)    ROW="| \`$PREV\` | \`$BUMP\` | **\`$(next_version "$BUMP")\`** |" ;;
             esac
             BODY="$MARKER"$'\n'"### 🔖 Release preview"$'\n\n'"| Current | Bump | On merge |"$'\n'"|:--|:--|:--|"$'\n'"$ROW"
             [ -n "$NOTE" ] && BODY="$BODY"$'\n\n'"$NOTE"

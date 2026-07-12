@@ -1,0 +1,17 @@
+# Dependabot: version updates for Actions pins (data-only repo — no pip/npm).
+# Cooldown waits out the compromised-fresh-release window; groups collapse noise into one PR.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    groups:
+      github-actions:
+        patterns: ["*"]
+    labels: [auto-update, skip-release]
+    commit-message:
+      prefix: "ci"

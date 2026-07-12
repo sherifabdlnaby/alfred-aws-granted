@@ -1,0 +1,3 @@
+# Repo-wide zizmor exceptions. Prefer inline `# zizmor: ignore[<rule>] -- <why>` on the
+# offending line; only put lasting, repo-wide exceptions here with a written justification.
+rules: {}
