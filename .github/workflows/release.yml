@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0 # tags, so the preview can compute the next version
           persist-credentials: false
       # The dedicated autolabeler sub-action (split out of the main action in release-drafter v7).
-      - uses: release-drafter/release-drafter/autolabeler@eada3c96a64734dd381cfbda23511034e328ddb0 # v7.6.0
+      - uses: release-drafter/release-drafter/autolabeler@34d80673e067bdc0c24568d3af899c216adcfaa9 # v7.7.0
         with:
           config-name: release-drafter.yml
         env:
@@ -271,7 +271,7 @@ jobs:
           git tag -a "${TAG}" -m "Release ${TAG}"
           git push origin "${TAG}"
       - name: Setup mise
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
           install: true
           install_args: "--locked" # honor mise.lock
