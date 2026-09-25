@@ -1,11 +1,17 @@
 # Minimum `mise` version. If not matched, mise guides the user to update.
 # -> Bump when relying on a newly introduced setting.
-min_version = "2026.6.6" # untrusted-config floor; raise when relying on newer settings.
+min_version = "2026.9.13" # match CI's mise pin and the mise that wrote mise.lock
 
 # ── 🛠️ tools ──────────────────────────────────────────────────────────────────
-# This is a DATA-only Alfred workflow (plist/JSON/SVG/images) — there is NO
-# language runtime to install. Only linters/formatters + the hook runner live here.
+# This is a DATA-only Alfred workflow (plist/JSON/SVG/images). The workflow itself needs
+# no runtime; everything here serves the linters/formatters and the hook runner.
 [tools]
+
+# runtimes
+node = "24" # runs prettier (npm backend)
+
+# yamllint ships only as a Python package. uv installs it; see pypi.uvx below.
+uv = "0.9"
 
 # linters & formatters
 prettier = "3"      # JSON format (scoped to *.json in hk.pkl)
@@ -22,10 +28,10 @@ pinact = "4"        # GitHub Actions pin SHAs
 betterleaks = "1"   # secret scanner
 
 # pre-commit
-hk = "1.49.0" # full MAJOR.MINOR.PATCH — must match hk.pkl amends/import URLs
+hk = "2.0.1" # full MAJOR.MINOR.PATCH, must match .config/hk.pkl amends/import URLs
 
-# yamllint ships only via pipx (pure-Python). uv installs it; see pipx.uvx below.
-uv = "0.9"
+# ── 🌳 environment variables ──────────────────────────────────────────────────
+[env]
 
 # ── 📏 vars ───────────────────────────────────────────────────────────────────
 [vars]
@@ -33,11 +39,11 @@ setup_version = "1" # Increment when setup steps change / users must re-run setu
 
 # ── ▶️ tasks ──────────────────────────────────────────────────────────────────
 [tasks.check]
-description = "Run all linters, formatters & validators as ran by pre-commit and in PR's CI"
+description = "Run all checks the repo enforces on the working tree (uncommitted changes), the same suite CI runs"
 alias = ["lint"]
 usage = '''
     flag "--fix"              help="apply fixes instead of only reporting"
-    flag "--all"              help="run on all files (default: staged only)"
+    flag "--all"              help="run on all files (default: uncommitted changes)"
     flag "--pr"               help="only files changed vs the default branch (conflicts with --all)"
     flag "--fail-fast"        help="stop at the first failing step (default: run all, report every failure)"
     flag "--step <step>"      var=#true help="run only these step(s)"
@@ -58,9 +64,9 @@ depends = ["lint"]
 run = "echo 'No tests — data-only workflow.'"
 
 [tasks.setup] # one-time, idempotent bootstrap; re-run when `enter` warns it's stale
-description = "One-time, idempotent project bootstrap: install tools (no runtime deps)"
-depends_post = ["setup:stamp"]                                                          # stamp last (see setup:stamp wait_for)
-run = "mise install"                                                                    # installs linters/formatters + hk; no runtime deps for a data repo
+description = "One-time, idempotent project bootstrap: check prerequisites, then install tools (no project deps)"
+depends_post = ["setup:stamp"]
+run = "mise doctor project && mise install"                                                                       # stop early on a missing prerequisite (see [doctor.checks])
 
 [tasks.build]
 description = "Build the .alfredworkflow package (zip of the workflow data)"
@@ -91,12 +97,10 @@ fi
 # Zip the workflow payload (plist/JSON/SVG/images/README/LICENSE). Exclude repo
 # plumbing, the build/ output, and dev-only tooling that shouldn't ship in Alfred.
 zip -r "${artifact}" . \
-  -x '.git/*' -x '.github/*' -x '.mise/*' -x 'build/*' \
+  -x '.git/*' -x '.github/*' -x '.config/*' -x '.mise/*' -x 'build/*' \
   -x '*.alfredworkflow' -x 'info.plist.bak' -x '.DS_Store' \
   -x '.gitignore' -x '.gitattributes' \
-  -x 'mise.toml' -x 'mise.lock' -x 'mise.local.toml' -x 'hk.pkl' \
-  -x 'AGENTS.md' -x '.yamllint' -x 'typos.toml' -x '.betterleaks.toml' \
-  -x 'lychee.toml' -x 'rumdl.toml'
+  -x 'mise.toml' -x 'mise.lock' -x 'mise.local.toml' -x 'AGENTS.md'
 echo "Built ${artifact}"
 '''
 
@@ -110,15 +114,15 @@ rm -f info.plist.bak
 echo "Cleaned build artifacts"
 '''
 
-[tasks."setup:stamp"] # write the version of the last run setup to .mise/setup
+[tasks."setup:stamp"] # write the version of the last run setup to .config/mise/setup
 hide = true
 quiet = true
-run = 'printf %s "{{vars.setup_version}}" > .mise/setup && echo "✅ Setup v{{vars.setup_version}} stamped"'
+run = 'printf %s "{{vars.setup_version}}" > .config/mise/setup && echo "✅ Setup v{{vars.setup_version}} stamped"'
 
 [tasks."setup:check"] # fast probe (runs on `enter`); warns if setup is stale, never fails
 hide = true
 quiet = true
-run = '[ "$(cat .mise/setup 2>/dev/null)" = "{{vars.setup_version}}" ] || echo "⚠️  Your setup is stale, run: mise run setup" >&2'
+run = '[ "$(cat .config/mise/setup 2>/dev/null)" = "{{vars.setup_version}}" ] || echo "⚠️  Your setup is stale, run: mise run setup" >&2'
 
 # ── 🪝 hooks ──────────────────────────────────────────────────────────────────
 [hooks]
@@ -126,12 +130,19 @@ run = '[ "$(cat .mise/setup 2>/dev/null)" = "{{vars.setup_version}}" ] || echo "
 enter = "MISE_OFFLINE=1 mise run setup:check"
 postinstall = "hk install --mise"             # canonical hook install: runs after every `mise install`, idempotent
 
+# ── 🩺 doctor checks ──────────────────────────────────────────────────────────
+# Prerequisites mise can't install. `mise doctor project` runs them; setup runs it first.
+# [doctor.checks.example]
+# description = "What must be true"
+# run = "some-probe >/dev/null 2>&1"
+# hint = "How to fix it, then re-run: mise run setup"
+
 # ── ⚙️ settings ───────────────────────────────────────────────────────────────
 [settings]
 lockfile = true                     # write/commit mise.lock — REQUIRED before any pin resolves reproducibly
 minimum_release_age = "7d"          # ignore releases <7d old (supply-chain cooldown)
 disable_backends = ["asdf", "vfox"] # resolve only via verified backends
-pipx.uvx = true                     # install pipx tools (yamllint) via uv; the bundled-pip path breaks under minimum_release_age on older CI pip
+pypi.uvx = true                     # install pypi tools (yamllint) via uv; the bundled-pip path breaks under minimum_release_age on older CI pip
 
 # Use `gh` token to overcome github limits, fallback to gcm if gh is not working.
 github.gh_cli_tokens = true

@@ -1,10 +1,13 @@
 # Drives the project's own `mise run check` (the same task local dev + the pre-commit
 # hook use) and reports lint/format failures. On a PR it leaves one sticky comment
 # pointing the author at `mise run check --fix`. Also validates `mise run build` so a
-# broken package cannot merge undetected. See references/platforms/github.md (cicd skill).
+# broken package cannot merge undetected.
 name: 🎨 Linters, Validators, and Formatters
 on:
   pull_request: {}
+  # Merges to the default branch: sweep right away instead of waiting up to a day for the cron.
+  push:
+    branches: [main]
   schedule:
     # Daily sweep so the default branch can't quietly rot.
     - cron: "0 0 * * *"
@@ -44,6 +47,7 @@ jobs:
       - name: Setup mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          version: "2026.9.13" # pin mise itself, not just the action
           install: true
           install_args: "--locked" # honor mise.lock
           cache: true
@@ -123,6 +127,7 @@ jobs:
       - name: Setup mise
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          version: "2026.9.13" # pin mise itself, not just the action
           install: true
           install_args: "--locked"
           cache: true

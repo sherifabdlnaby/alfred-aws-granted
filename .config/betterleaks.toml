@@ -5,7 +5,8 @@
 [extend]
 useDefault = true
 
-[allowlist]
+# Uncomment the block together with at least one entry: an empty [allowlist] is a config error.
+# [allowlist]
 # This is a data repo describing AWS resources; example ARNs / 12-digit account IDs
 # in regions.json / services.json are not secrets. Allowlist confirmed ones here:
 # regexes = [

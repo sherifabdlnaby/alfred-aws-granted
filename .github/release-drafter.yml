@@ -24,7 +24,7 @@ autolabeler:
     files: ["**/*.md"]
     title: ['/\bdocs?\b|readme/i']
   - label: "ci"
-    files: [".github/**", "mise.toml", "mise.lock", "hk.pkl"]
+    files: [".github/**", "mise.toml", "mise.lock", ".config/**"]
     title: ['/\bci\b|workflow|pipeline|actions/i']
   - label: "enhancement"
     title: ["/enhancement/i"]
