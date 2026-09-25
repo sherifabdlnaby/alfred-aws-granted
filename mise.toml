@@ -97,12 +97,10 @@ fi
 # Zip the workflow payload (plist/JSON/SVG/images/README/LICENSE). Exclude repo
 # plumbing, the build/ output, and dev-only tooling that shouldn't ship in Alfred.
 zip -r "${artifact}" . \
-  -x '.git/*' -x '.github/*' -x '.config/*' -x 'build/*' \
+  -x '.git/*' -x '.github/*' -x '.config/*' -x '.mise/*' -x 'build/*' \
   -x '*.alfredworkflow' -x 'info.plist.bak' -x '.DS_Store' \
   -x '.gitignore' -x '.gitattributes' \
-  -x 'mise.toml' -x 'mise.lock' -x 'mise.local.toml' \
-  -x 'AGENTS.md' -x '.yamllint' -x 'typos.toml' -x '.betterleaks.toml' \
-  -x 'lychee.toml' -x 'rumdl.toml'
+  -x 'mise.toml' -x 'mise.lock' -x 'mise.local.toml' -x 'AGENTS.md'
 echo "Built ${artifact}"
 '''
 

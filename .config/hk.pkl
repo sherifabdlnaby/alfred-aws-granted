@@ -13,6 +13,13 @@ local commonIgnores =
     "build/**",
   )
 
+// Adds `flag` right after `bin` in a builtin command, keeping the builtin's own args.
+local function withFlag(spec: CommandSpec, bin: String, flag: String): CommandSpec = (spec) {
+  command =
+    if (spec.command is String) (spec.command as String).replaceAll(bin + " ", bin + " " + flag + " ")
+    else (spec.command as Command) { argv = List(bin, flag) + (spec.command as Command).argv.filter((a) -> a != bin) }
+}
+
 // Gates by moment; each step lives in exactly one tier, hooks below only compose tiers.
 // `check` mounts the union: the repo's full contract and the only hook CI runs.
 
@@ -37,7 +44,7 @@ local commitGates: Mapping<String, Step> = new Mapping<String, Step> {
   // Config-file formats
   ["mise"] = Builtins.mise
   ["taplo"] = Builtins.taplo
-  ["yamllint"] = Builtins.yamllint
+  ["yamllint"] = (Builtins.yamllint) { env { ["YAMLLINT_CONFIG_FILE"] = ".config/yamllint.yml" } }
   ["yamlfmt"] = Builtins.yamlfmt
 
   // GitHub Actions
@@ -59,12 +66,16 @@ local commitGates: Mapping<String, Step> = new Mapping<String, Step> {
   }
 
   // Secrets & spelling
-  ["betterleaks"] = Builtins.betterleaks
-  ["typos"] = Builtins.typos
+  // betterleaks never auto-discovers its config; without the env var it scans on defaults.
+  ["betterleaks"] = (Builtins.betterleaks) { env { ["BETTERLEAKS_CONFIG"] = ".config/betterleaks.toml" } }
+  ["typos"] = (Builtins.typos) {
+    check_diff = withFlag(Builtins.typos.check_diff, "typos", "--config=.config/typos.toml")
+    fix = withFlag(Builtins.typos.fix, "typos", "--config=.config/typos.toml")
+  }
 
   // Docs / links
-  ["lychee"] = Builtins.lychee
-  ["rumdl"] = Builtins.rumdl
+  ["lychee"] = (Builtins.lychee) { check = withFlag(Builtins.lychee.check, "lychee", "--config=.config/lychee.toml") }
+  ["rumdl"] = Builtins.rumdl // reads .config/rumdl.toml natively
 }
 
 // Push gates: run before a push. Slower or branch-scoped checks that would drag the commit loop.

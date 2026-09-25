@@ -3,5 +3,8 @@
 # not checked. Flip `offline = false` (and confirm) to also check online links.
 offline = true
 
+# Also check `#anchor` fragments, so a link to a renamed heading fails. Enum, not a bool.
+include_fragments = "anchor-only"
+
 # Don't use `exclude_path` to scope inputs — it's regex-matched against the whole
 # path and can silently drop subtrees. hk already passes the right file list.
