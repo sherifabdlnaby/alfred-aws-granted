@@ -1,6 +1,6 @@
 # Minimum `mise` version. If not matched, mise guides the user to update.
 # -> Bump when relying on a newly introduced setting.
-min_version = "2026.9.7" # oldest mise that supports everything here (e.g. `mise doctor project`, the `pypi:` backend)
+min_version = "2026.9.13" # match CI's mise pin and the mise that wrote mise.lock
 
 # ── 🛠️ tools ──────────────────────────────────────────────────────────────────
 # This is a DATA-only Alfred workflow (plist/JSON/SVG/images). The workflow itself needs
