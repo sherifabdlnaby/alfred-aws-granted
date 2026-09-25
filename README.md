@@ -89,7 +89,7 @@ mise doctor
    mise run <task> --help  # a task's flags
    ```
 
-Commits automatically run the same `check` pipeline on staged files via hk. Fix any failures with `mise run check --fix`. CI runs `mise run check` (and a build smoke) on every PR. Releases are label-driven: add one of `major` / `minor` / `patch` / `skip-release` on the PR; merging tags, builds the `.alfredworkflow`, attests provenance, and publishes. Unlabeled merges fall back to `minor`.
+Git hooks come from [hk](https://hk.jdx.dev) (config in `.config/hk.pkl`): commits lint and format staged files, pushes run the slower gates, and CI runs both as `mise run check`. Fix any failures with `mise run check --fix`. CI runs `mise run check` (and a build smoke) on every PR. Releases are label-driven: add one of `major` / `minor` / `patch` / `skip-release` on the PR; merging tags, builds the `.alfredworkflow`, attests provenance, and publishes. Unlabeled merges fall back to `minor`.
 
 See [`AGENTS.md`](./AGENTS.md) for how to extend the data/tooling (including for AI agents).
 
