@@ -143,6 +143,7 @@ jobs:
           fi
   # ── Resolve the next version from labels or dispatch inputs ──
   version:
+    timeout-minutes: 10
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:

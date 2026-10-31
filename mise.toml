@@ -1,6 +1,6 @@
 # Minimum `mise` version. If not matched, mise guides the user to update.
 # -> Bump when relying on a newly introduced setting.
-min_version = "2026.9.13" # match CI's mise pin and the mise that wrote mise.lock
+min_version = "2026.10.13" # oldest mise that supports everything in this file
 
 # ── 🛠️ tools ──────────────────────────────────────────────────────────────────
 # This is a DATA-only Alfred workflow (plist/JSON/SVG/images). The workflow itself needs
@@ -8,27 +8,24 @@ min_version = "2026.9.13" # match CI's mise pin and the mise that wrote mise.loc
 [tools]
 
 # runtimes
-node = "24" # runs prettier (npm backend)
-
-# yamllint ships only as a Python package. uv installs it; see pypi.uvx below.
-uv = "0.9"
+node = "26" # runs prettier (npm backend)
 
 # linters & formatters
-prettier = "3"      # JSON format (scoped to *.json in hk.pkl)
-taplo = "0.10"      # TOML lint + format (mise.toml & configs)
-yamlfmt = "0.21"    # YAML format
-yamllint = "1"      # YAML structural lint
-typos = "1"         # spell-check
-lychee = "0.24"     # link checker
-rumdl = "0.2"       # Markdown lint + format
-shellcheck = "0.11" # shell lint (used by actionlint for run: blocks)
-actionlint = "1"    # GitHub Actions lint
-zizmor = "1"        # GitHub Actions security
-pinact = "4"        # GitHub Actions pin SHAs
-betterleaks = "1"   # secret scanner
+prettier = "3"                 # JSON format (scoped to *.json in hk.pkl)
+taplo = "0.10"                 # TOML lint + format (mise.toml & configs)
+yamlfmt = "0.21"               # YAML format
+"aqua:owenlamont/ryl" = "0.26" # YAML structural lint
+typos = "1"                    # spell-check
+lychee = "0.24"                # link checker
+rumdl = "0.3"                  # Markdown lint + format
+shellcheck = "0.11"            # jactionlint lints workflow `run:` blocks with it
+jactionlint = "2"              # GitHub Actions lint
+zizmor = "1"                   # GitHub Actions security
+pinact = "5"                   # GitHub Actions pin SHAs
+betterleaks = "1"              # secret scanner
 
 # pre-commit
-hk = "2.0.1" # full MAJOR.MINOR.PATCH, must match .config/hk.pkl amends/import URLs
+hk = "2.8.1" # full MAJOR.MINOR.PATCH, must match .config/hk.pkl amends/import URLs
 
 # ── 🌳 environment variables ──────────────────────────────────────────────────
 [env]
@@ -142,7 +139,6 @@ postinstall = "hk install --mise"             # canonical hook install: runs aft
 lockfile = true                     # write/commit mise.lock — REQUIRED before any pin resolves reproducibly
 minimum_release_age = "7d"          # ignore releases <7d old (supply-chain cooldown)
 disable_backends = ["asdf", "vfox"] # resolve only via verified backends
-pypi.uvx = true                     # install pypi tools (yamllint) via uv; the bundled-pip path breaks under minimum_release_age on older CI pip
 
 # Use `gh` token to overcome github limits, fallback to gcm if gh is not working.
 github.gh_cli_tokens = true
