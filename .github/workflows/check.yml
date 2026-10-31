@@ -19,9 +19,8 @@ on:
         type: choice
         options: [all, pr]
         default: all
-# Default read-only; the check job widens to comment on PRs.
-permissions:
-  contents: read
+# Nothing by default; each job asks for what it needs.
+permissions: {}
 # One run per PR (or ref) — newer pushes cancel stale runs.
 concurrency:
   group: lint-${{ github.event.pull_request.number || github.ref }}
@@ -35,6 +34,7 @@ jobs:
       contents: read
       pull-requests: write # sticky comment pointing the author at the fix command
     env:
+      MISE_LOCKED: "1" # every install honors mise.lock, also lazy/task tools `mise run` installs later
       # Pretty colors in the CI!
       CLICOLOR_FORCE: "1"
       FORCE_COLOR: "1"
@@ -44,13 +44,19 @@ jobs:
         with:
           fetch-depth: 0 # full history so `check --pr` can diff against the default branch
           persist-credentials: false
-      - name: Setup mise
-        uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+      # Cache downloads, not installs: MISE_LOCKED re-checks each download against mise.lock.
+      - name: Cache mise downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          version: "2026.9.13" # pin mise itself, not just the action
+          path: ~/.cache/mise/downloads-cas
+          key: mise-cas-${{ runner.os }}-${{ hashFiles('mise.lock') }}
+          restore-keys: mise-cas-${{ runner.os }}-
+      - name: Setup mise
+        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        with:
+          version: "2026.10.24" # pin mise itself, not just the action
           install: true
-          install_args: "--locked" # honor mise.lock
-          cache: true
+          cache: false # see the step above
           experimental: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # SO tool installs don't hit API rate limits
@@ -119,18 +125,26 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      MISE_LOCKED: "1" # every install honors mise.lock, also lazy/task tools `mise run` installs later
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Setup mise
-        uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+      # Cache downloads, not installs: MISE_LOCKED re-checks each download against mise.lock.
+      - name: Cache mise downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          version: "2026.9.13" # pin mise itself, not just the action
+          path: ~/.cache/mise/downloads-cas
+          key: mise-cas-${{ runner.os }}-${{ hashFiles('mise.lock') }}
+          restore-keys: mise-cas-${{ runner.os }}-
+      - name: Setup mise
+        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        with:
+          version: "2026.10.24" # pin mise itself, not just the action
           install: true
-          install_args: "--locked"
-          cache: true
+          cache: false # see the step above
           experimental: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
