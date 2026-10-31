@@ -1,7 +1,7 @@
 // hk.pkl: git hooks for hk. See https://hk.jdx.dev.
 // Both URLs pin the hk version; keep them equal to the hk in mise.toml [tools] and bump them together.
-amends "package://github.com/jdx/hk/releases/download/v2.0.1/hk@2.0.1#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v2.0.1/hk@2.0.1#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.pkl"
 
 // Repo-wide ignores: committed paths only (.gitignore is already honored). Per-step `exclude` stacks on top.
 // Binary assets have no text linter. SVGs under services/ are NOT excluded: the generic
@@ -25,6 +25,12 @@ local function withFlag(spec: CommandSpec, bin: String, flag: String): CommandSp
 
 // Commit gates: run on every commit. File-scoped, fast, auto-fixable.
 local commitGates: Mapping<String, Step> = new Mapping<String, Step> {
+  // A typo in hk.pkl leaves a step that checks nothing and passes.
+  ["hk-validate"] {
+    glob = ".config/hk.pkl"
+    check = "hk validate --deny-warnings"
+  }
+
   // JSON formatting (regions.json, services.json). Scoped to *.json only so it
   // doesn't fight yamlfmt/rumdl over YAML/Markdown (prettier's default glob covers those).
   ["prettier"] = (Builtins.prettier) { glob = List("*.json") }
@@ -39,16 +45,17 @@ local commitGates: Mapping<String, Step> = new Mapping<String, Step> {
   ["check_case_conflict"] = Builtins.check_case_conflict
   ["check_merge_conflict"] = Builtins.check_merge_conflict
   ["check_symlinks"] = Builtins.check_symlinks
+  ["destroyed_symlinks"] = Builtins.destroyed_symlinks
   ["detect_private_key"] = Builtins.detect_private_key
 
   // Config-file formats
   ["mise"] = Builtins.mise
   ["taplo"] = Builtins.taplo
-  ["yamllint"] = (Builtins.yamllint) { env { ["YAMLLINT_CONFIG_FILE"] = ".config/yamllint.yml" } }
+  ["ryl"] = Builtins.ryl // reads .config/ryl.toml natively
   ["yamlfmt"] = Builtins.yamlfmt
 
   // GitHub Actions
-  ["actionlint"] = Builtins.actionlint
+  ["jactionlint"] = Builtins.jactionlint
   ["zizmor"] = Builtins.zizmor
   // pinact resolves Action tags to SHAs via the GitHub API, so it needs a token or it hits the
   // anonymous rate limit. Prefer $GITHUB_TOKEN (CI injects it); locally fall back to the dev's `gh`

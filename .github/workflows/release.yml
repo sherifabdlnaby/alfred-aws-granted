@@ -143,6 +143,7 @@ jobs:
           fi
   # ── Resolve the next version from labels or dispatch inputs ──
   version:
+    timeout-minutes: 10
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
@@ -252,6 +253,7 @@ jobs:
       pull-requests: write # comment the release back on the PR
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MISE_LOCKED: "1" # every install honors mise.lock, also lazy/task tools `mise run` installs later
     steps:
       # Keeps the checkout token: the next step pushes the tag with it.
       - name: Checkout # zizmor: ignore[artipacked] -- this job pushes the release tag with the checkout token
@@ -271,11 +273,10 @@ jobs:
           git tag -a "${TAG}" -m "Release ${TAG}"
           git push origin "${TAG}"
       - name: Setup mise
-        uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
         with:
-          version: "2026.9.13" # pin mise itself, not just the action
+          version: "2026.10.24" # pin mise itself, not just the action
           install: true
-          install_args: "--locked" # honor mise.lock
           cache: false # one-shot release build; no cache to poison (zizmor: cache-poisoning)
           experimental: true
         env:
