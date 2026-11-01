@@ -11,6 +11,7 @@ local commonIgnores =
     "*.png",
     "*.gif",
     "build/**",
+    ".mise/locks/**", // written by `mise lock`
   )
 
 // Adds `flag` right after `bin` in a builtin command, keeping the builtin's own args.
